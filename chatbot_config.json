@@ -1,0 +1,12 @@
+{
+  "max_user_message_tokens": 1500,
+  "max_session_tokens": 10000,
+  "chunk_size": 1000,
+  "max_context_length": 30000,
+  "documents_folder_path": "C:\\Users\\asus\\python\\chatbotpdf\\files",
+  "gemini_model": "gemini-2.0-flash-exp",
+  "admin_credentials": {
+    "username": "admin",
+    "password": "admin123"
+  }
+}

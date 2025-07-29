@@ -1,0 +1,218 @@
+[
+  {
+    "timestamp": "2025-07-24T20:10:19.717115",
+    "user_message": "halo",
+    "bot_response": "Halo! Saya adalah Asisten Virtual BPS Provinsi Lampung. Saya siap membantu Anda dengan informasi statistik dan pertanyaan lainnya. Ada yang bisa saya bantu?",
+    "is_document_related": false,
+    "message_length": 4,
+    "response_length": 156,
+    "tokens_used": 0
+  },
+  {
+    "timestamp": "2025-07-24T20:10:57.110189",
+    "user_message": "saya ingin mengetahui Proyeksi Penduduk Hasil SP2010 kabupaten tanggamus tahun 2001 berapa ya?\n",
+    "bot_response": "Proyeksi Penduduk Hasil SP2010 Kabupaten Tanggamus pada tahun 2001 adalah 480.730 jiwa.\n\nSumber: Series Data Lampung 2015-2025_1.pdf (Bagian 63)\n",
+    "is_document_related": true,
+    "message_length": 95,
+    "response_length": 145,
+    "tokens_used": 3500
+  },
+  {
+    "timestamp": "2025-07-24T20:14:21.622679",
+    "user_message": "kalau Penduduk UsiaProduktif (15-64 tahun) (jiwa) di lampung tengah tahun 2025 berapa?",
+    "bot_response": "Berdasarkan dokumen yang tersedia, informasi mengenai jumlah Penduduk Usia Produktif (15-64 tahun) di Lampung Tengah pada tahun 2025 tidak ditemukan.\n\nSaya mohon maaf karena tidak dapat memberikan jawaban yang spesifik untuk pertanyaan Anda.\n",
+    "is_document_related": true,
+    "message_length": 86,
+    "response_length": 242,
+    "tokens_used": 3502
+  },
+  {
+    "timestamp": "2025-07-24T20:30:15.677647",
+    "user_message": "halo",
+    "bot_response": "Selamat datang! Saya asisten virtual BPS Lampung. Silakan tanyakan apa saja yang ingin Anda ketahui tentang data statistik atau pertanyaan umum lainnya.",
+    "is_document_related": false,
+    "message_length": 4,
+    "response_length": 152,
+    "tokens_used": 0
+  },
+  {
+    "timestamp": "2025-07-24T20:37:28.395460",
+    "user_message": "berapa jumlah penduduk di kota metro\n",
+    "bot_response": "Jumlah penduduk di Kota Metro tidak disebutkan secara eksplisit dalam dokumen yang tersedia.\n\nNamun, dokumen provinsi-lampung-dalam-angka-2024_compressed (2).pdf pada bagian 434 memberikan informasi jumlah penduduk Kota Metro yang berumur 15 tahun ke atas yang termasuk angkatan kerja adalah 131.892 jiwa dengan persentase 68,92%.\n\nDokumen tersebut tidak memberikan informasi mengenai total jumlah penduduk Kota Metro secara keseluruhan.\n",
+    "is_document_related": true,
+    "message_length": 37,
+    "response_length": 438,
+    "tokens_used": 3435
+  },
+  {
+    "timestamp": "2025-07-24T21:21:58.201144",
+    "user_message": "jumlah penduduk\n",
+    "bot_response": "Berdasarkan dokumen yang diberikan, informasi mengenai jumlah penduduk dapat ditemukan dalam beberapa konteks:\n\n*   **Konsep Penduduk dalam Sensus Penduduk (SP2010):** Dalam SP2010, pencacahan penduduk menggunakan konsep \"de jure\" (tempat tinggal biasa) dan \"de facto\" (tempat berada saat pencacahan). Perbedaan cakupan dalam konsep penduduk antar kedua sensus ini menyebabkan perbedaan jumlah penduduk dan koreksi dalam indikator-indikator yang dihasilkan.\n    *   Sumber: Series Data Lampung 2015-2025\\_1.pdf (Bagian 2)\n*   **Definisi Penduduk (SP2020):** Penduduk adalah semua orang yang berdomisili di wilayah Negara Kesatuan Republik Indonesia selama 1 tahun atau lebih, atau mereka yang berdomisili kurang dari 1 tahun tetapi bertujuan untuk menetap selama 1 tahun atau lebih.\n    *   Sumber: Series Data Lampung 2015-2025\\_1.pdf (Bagian 11); Series Data Lampung 2015-2025.xlsx (Bagian 4)\n\nNamun, dokumen-dokumen tersebut tidak memberikan angka spesifik mengenai jumlah penduduk Lampung.",
+    "is_document_related": true,
+    "message_length": 16,
+    "response_length": 993,
+    "tokens_used": 3316
+  },
+  {
+    "timestamp": "2025-07-24T21:22:24.112812",
+    "user_message": "jumlah penduduk lampung\n",
+    "bot_response": "Jumlah penduduk Lampung dapat dilihat dari dokumen \"provinsi-lampung-dalam-angka-2024_compressed (2).pdf\".\n\n**Informasi yang Tersedia:**\n\n*   **Tabel 3.1.1:** Menyajikan data penduduk, laju pertumbuhan penduduk, distribusi persentase penduduk, kepadatan penduduk, dan rasio jenis kelamin penduduk menurut kabupaten/kota di Provinsi Lampung pada tahun 2020, 2023, dan 2024. *(Bagian 37)*\n*   **Tabel 3.1.2:** Menyajikan jumlah penduduk menurut kelompok umur dan jenis kelamin di Provinsi Lampung (dalam ribuan jiwa) pada tahun 2023 dan 2024. *(Bagian 37)*\n\nUntuk data lebih rinci mengenai jumlah penduduk di berbagai kategori (berdasarkan umur, aktivitas, pendidikan, dll.) lihat pada bagian-bagian berikut dari dokumen \"provinsi-lampung-dalam-angka-2024_compressed (2).pdf\":\n\n*   Bagian 39: Informasi mengenai penduduk berumur 15 tahun ke atas berdasarkan jenis kegiatan selama seminggu yang lalu.\n*   Bagian 41 dan 42: Informasi mengenai penduduk berumur 15 tahun ke atas yang bekerja selama seminggu yang lalu, termasuk jumlah jam kerja dan lapangan pekerjaan.\n*   Bagian 43: Informasi mengenai penduduk berumur 15 tahun ke atas yang bekerja selama seminggu yang lalu berdasarkan kelompok umur dan jumlah jam kerja.\n*   Bagian 57 dan 58: Informasi mengenai persentase penduduk usia 7-24 tahun berdasarkan partisipasi sekolah dan persentase penduduk berumur 15 tahun ke atas yang melek huruf.\n*   Bagian 65: Informasi mengenai persentase penduduk usia 15 tahun ke atas yang merokok dalam sebulan terakhir.\n\n**Catatan:**\nUntuk mendapatkan angka jumlah penduduk secara spesifik, Anda dapat merujuk pada tabel-tabel yang disebutkan di atas dalam dokumen \"provinsi-lampung-dalam-angka-2024_compressed (2).pdf)\".\n",
+    "is_document_related": true,
+    "message_length": 24,
+    "response_length": 1709,
+    "tokens_used": 3351
+  },
+  {
+    "timestamp": "2025-07-24T21:23:22.777127",
+    "user_message": "jumlah penduduk metro\n",
+    "bot_response": "Jumlah penduduk Kota Metro tidak disebutkan secara spesifik dalam dokumen yang tersedia. Dokumen hanya menyediakan informasi berikut:\n\n1.  **Jumlah penduduk menurut kelompok umur dan jenis kelamin di Provinsi Lampung (ribu jiwa), 2023 dan 2024:** Data ini tidak memberikan angka spesifik untuk Kota Metro, tetapi mencakup data untuk Provinsi Lampung secara keseluruhan. (Sumber: provinsi-lampung-dalam-angka-2024_compressed (2).pdf)\n\n2.  **Tingkat Partisipasi Angkatan Kerja (TPAK) Kota Metro:** TPAK Metro adalah 68,92 dengan jumlah total 131.892. (Sumber: provinsi-lampung-dalam-angka-2024_compressed (2).pdf)\n\n3.  **Jumlah Lowongan Kerja Terdaftar di Kota Metro:** Laki-laki sebanyak 456, perempuan 419, dan total 875. (Sumber: provinsi-lampung-dalam-angka-2024_compressed (2).pdf)\n\n4.  **Jumlah Pencari Kerja Terdaftar di Kota Metro Menurut Pendidikan Tertinggi yang Ditamatkan dan Jenis Kelamin:** Laki-laki sebanyak 213, perempuan 259, dan total 472. (Sumber: provinsi-lampung-dalam-angka-2024_compressed (2).pdf)\n\n5.  **Indeks Harga Konsumen di Kota Metro pada tahun 2023:** 118,60 (Sumber: provinsi-lampung-dalam-angka-2024_compressed (2).pdf)\n\nUntuk informasi lebih detail mengenai jumlah penduduk Kota Metro, Anda mungkin perlu merujuk ke publikasi BPS lainnya atau menghubungi BPS Provinsi Lampung secara langsung.",
+    "is_document_related": true,
+    "message_length": 22,
+    "response_length": 1325,
+    "tokens_used": 3254
+  },
+  {
+    "timestamp": "2025-07-24T21:23:51.812421",
+    "user_message": "jumlah penduduk metro",
+    "bot_response": "Jumlah penduduk Kota Metro tidak disebutkan secara spesifik dalam dokumen yang tersedia. Namun, ada informasi terkait jumlah penduduk berumur 15 tahun ke atas dan tingkat partisipasi angkatan kerja (TPAK) di Kota Metro:\n\n*   **Jumlah Penduduk Berumur 15 Tahun ke Atas:** 131.892 (Sumber: provinsi-lampung-dalam-angka-2024_compressed (2).pdf, Bagian 433 & 434)\n*   **Tingkat Partisipasi Angkatan Kerja (TPAK):** 68,92% (Sumber: provinsi-lampung-dalam-angka-2024_compressed (2).pdf, Bagian 433 & 434)\n\nSelain itu, terdapat informasi mengenai Indeks Harga Konsumen (IHK) di Kota Metro pada tahun 2023, yaitu 118,60 (Sumber: provinsi-lampung-dalam-angka-2024_compressed (2).pdf, Bagian 1471).",
+    "is_document_related": true,
+    "message_length": 21,
+    "response_length": 688,
+    "tokens_used": 3254
+  },
+  {
+    "timestamp": "2025-07-24T21:24:55.605083",
+    "user_message": "jumlah penduduk kota metro tahun 2023",
+    "bot_response": "Jumlah penduduk Kota Metro pada tahun 2023 tidak ditemukan secara eksplisit dalam dokumen-dokumen yang diberikan.\n\nNamun, ada beberapa informasi terkait penduduk Kota Metro yang bisa disajikan:\n\n1.  **Proyeksi Penduduk (Series Data Lampung 2015-2025\\_1.pdf):**\n    *   Tidak ada data spesifik untuk tahun 2023. Data terakhir yang tersedia adalah proyeksi penduduk tahun 2009 sebanyak 143.718 jiwa.\n\n2.  **Jumlah Kendaraan Bermotor (provinsi-lampung-dalam-angka-2024\\_compressed (2).pdf):**\n    *   Jumlah sepeda motor di Kota Metro pada tahun 2023 adalah 94.865 unit.\n    *   Jumlah total kendaraan bermotor di Kota Metro pada tahun 2023 adalah 113.669 unit.\n\n3.  **Indeks Harga Konsumen (IHK) (provinsi-lampung-dalam-angka-2024\\_compressed (2).pdf):**\n    *   IHK Kota Metro pada tahun 2023 adalah 118,60.\n\n4.  **Pencari Kerja Terdaftar (provinsi-lampung-dalam-angka-2024\\_compressed (2).pdf):**\n    *   Jumlah pencari kerja terdaftar di Kota Metro pada tahun 2023 adalah 472 orang.\n\nKarena dokumen yang tersedia tidak menyediakan informasi langsung mengenai jumlah penduduk Kota Metro pada tahun 2023, saya tidak dapat memberikan jawaban yang definitif.\n\n**Sumber:**\n\n*   Series Data Lampung 2015-2025\\_1.pdf\n*   provinsi-lampung-dalam-angka-2024\\_compressed (2).pdf\n",
+    "is_document_related": true,
+    "message_length": 37,
+    "response_length": 1269,
+    "tokens_used": 3532
+  },
+  {
+    "timestamp": "2025-07-24T21:25:30.722078",
+    "user_message": "jumlah penduduk kabupaten mesuji",
+    "bot_response": "Jumlah penduduk Kabupaten Mesuji dapat dilihat dari dokumen \"provinsi-lampung-dalam-angka-2024_compressed (2).pdf\".\n\n**Data Penduduk Kabupaten Mesuji:**\n\n*   **Jumlah Total:** 176.047\n    *   Sumber: Halaman 146 dan 147\n*   Tabel Jumlah Penduduk Menurut Kelompok Umur dan Jenis Kelamin tidak ada informasi detail kelompok umur untuk Kabupaten Mesuji.\n    *   Sumber: Halaman 140\n\n**Catatan:**\n\n*   Informasi ini berasal dari tabel yang berkaitan dengan jumlah penduduk berumur 15 tahun ke atas dan Tingkat Partisipasi Angkatan Kerja (TPAK).\n*   Dokumen ini juga menyediakan data TPAK untuk Kabupaten Mesuji, yaitu 70,15%.\n\nSelain itu, terdapat data lowongan kerja terdaftar dan pencari kerja terdaftar di Kabupaten Mesuji:\n\n*   **Lowongan Kerja Terdaftar:**\n    *   Laki-laki: 475\n    *   Perempuan: 437\n    *   Jumlah: 912\n        *   Sumber: Halaman 172\n\n*   **Pencari Kerja Terdaftar:**\n    *   Laki-laki: 244\n    *   Perempuan: 295\n    *   Jumlah: 539\n        *   Sumber: Halaman 174\n\n**Kesimpulan:**\n\nDokumen \"provinsi-lampung-dalam-angka-2024_compressed (2).pdf\" menyediakan data jumlah penduduk, TPAK, lowongan kerja terdaftar, dan pencari kerja terdaftar untuk Kabupaten Mesuji.\n",
+    "is_document_related": true,
+    "message_length": 32,
+    "response_length": 1187,
+    "tokens_used": 3252
+  },
+  {
+    "timestamp": "2025-07-24T21:26:18.136547",
+    "user_message": "jumlah penduduk kabupaten lampung barat",
+    "bot_response": "Berdasarkan dokumen yang tersedia, terdapat beberapa informasi mengenai Kabupaten Lampung Barat terkait dengan data kependudukan dan ketenagakerjaan. Namun, tidak ada informasi spesifik mengenai jumlah penduduk secara umum. Berikut rincian informasi yang tersedia:\n\n1.  **Angkatan Kerja (Economically Active)**:\n\n    *   Jumlah angkatan kerja di Lampung Barat adalah 185.269 orang (Sumber: provinsi-lampung-dalam-angka-2024\\_compressed (2).pdf, Bagian 424).\n2.  **Penduduk Berumur 15 Tahun ke Atas yang Bekerja**:\n\n    *   Jumlah penduduk berumur 15 tahun ke atas yang bekerja di Lampung Barat adalah 131.960 orang (Sumber: provinsi-lampung-dalam-angka-2024\\_compressed (2).pdf, Bagian 484).\n    *   Lapangan pekerjaan utama:\n        *   Sektor 1: 7.456\n        *   Sektor 2: 45.853\n3.  **Jumlah Lowongan Kerja Terdaftar**:\n\n    *   Lowongan kerja terdaftar di Lampung Barat adalah 205, dengan rincian 94 laki-laki dan 111 perempuan (Sumber: provinsi-lampung-dalam-angka-2024\\_compressed (2).pdf, Bagian 501).\n4.  **Rata-rata Pengeluaran per Kapita Sebulan**:\n\n    *   Tahun 2023:\n        *   Makanan: Rp614.936,00\n        *   Bukan Makanan: Rp435.724,00\n        *   Total: Rp1.050.660,00 (Sumber: provinsi-lampung-dalam-angka-2024\\_compressed (2).pdf, Bagian 1342).\n5.  **Tingkat Partisipasi Angkatan Kerja (TPAK)**:\n\n    *   TPAK Lampung Barat adalah 82,01% (Sumber: provinsi-lampung-dalam-angka-2024\\_compressed (2).pdf, Bagian 433).\n\nMeskipun demikian, informasi mengenai jumlah penduduk Kabupaten Lampung Barat secara keseluruhan tidak ditemukan dalam dokumen-dokumen ini.\n",
+    "is_document_related": true,
+    "message_length": 39,
+    "response_length": 1578,
+    "tokens_used": 3331
+  },
+  {
+    "timestamp": "2025-07-25T06:54:37.353911",
+    "user_message": "Data PDRB Lampung terbaru?",
+    "bot_response": "Data PDRB (Produk Domestik Regional Bruto) Provinsi Lampung yang tersedia dalam dokumen adalah sebagai berikut:\n\n**PDRB Atas Dasar Harga Berlaku (ADHB) dan PDRB Atas Dasar Harga Konstan (ADHK) Tahun 2010 (Juta Rupiah)**\n\nBerikut adalah data PDRB ADHB dan ADHK Provinsi Lampung dari tahun 2010 hingga 2024:\n\n| Tahun | PDRB ADHB (Juta Rupiah) | PDRB ADHK Tahun 2010 (Juta Rupiah) |\n|-------|--------------------------|-----------------------------------|\n| 2010  | 150.560.840,00           | 150.560.841,71                    |\n| 2011  | 170.046.790,00           | 160.437.501,38                    |\n| 2012  | 187.348.820,00           | 170.769.206,61                    |\n| 2013  | 204.402.640,00           | 180.620.007,69                    |\n| 2014  | 230.794.450,00           | 189.797.490,92                    |\n| 2015  | 252.883.100,00           | 199.536.916,61                    |\n| 2016  | 279.417.620,00           | 209.793.440,72                    |\n| 2017  | 304.367.800,00           | 220.392.728,33                    |\n| 2018  | 328.495.150,00           | 229.956.387,78                    |\n| 2019  | 346.773.770,00           | 237.866.680,00                    |\n| 2020  | 353.025.090,00           | 240.319.592,20                    |\n| 2021  | 371.198.880,00           | 246.966.491,15                    |\n| 2022  | 414.119.680,00           | 257.534.189,65                    |\n| 2023  | 448.850.640,00           | 269.240.539,49                    |\n| 2024  | 483.882.920,00           | 281.557.202,82                    |\n\n**Interpretasi:**\n\n*   **PDRB ADHB:** Menunjukkan nilai produksi barang dan jasa pada harga yang berlaku pada tahun tersebut. Kenaikan PDRB ADHB dapat disebabkan oleh peningkatan volume produksi atau kenaikan harga.\n*   **PDRB ADHK:** Mengukur nilai produksi barang dan jasa dengan menggunakan harga konstan pada tahun dasar (dalam hal ini, tahun 2010). PDRB ADHK memberikan gambaran tentang pertumbuhan ekonomi riil, karena telah menghilangkan pengaruh perubahan harga.\n\n**Catatan:** Data PDRB untuk tahun 2025 tidak tersedia dalam dokumen ini.\n\n**Sumber:** Series Data Lampung 2015-2025\\_1.pdf\n",
+    "is_document_related": true,
+    "message_length": 26,
+    "response_length": 2145,
+    "tokens_used": 3309
+  },
+  {
+    "timestamp": "2025-07-25T06:56:07.496286",
+    "user_message": "Bagaimana tingkat kemiskinan di Lampung?",
+    "bot_response": "Tingkat kemiskinan di Lampung dapat dilihat dari beberapa indikator yang tersedia dalam dokumen:\n\n1.  **Kemiskinan (Persen):** Indikator ini menunjukkan persentase penduduk yang memiliki rata-rata pengeluaran per kapita sebulan di bawah garis kemiskinan terhadap total penduduk di suatu wilayah. (Sumber: Series Data Lampung 2015-2025.xlsx dan Series Data Lampung 2015-2025\\_1.pdf)\n2.  **Garis Kemiskinan:** Nilai pengeluaran minimum yang dibutuhkan seseorang untuk memenuhi kebutuhan pokok hidupnya selama sebulan, baik kebutuhan makanan maupun bukan makanan. Kebutuhan makanan ini setara dengan 2.100 kalori per kapita per hari. Penduduk dikatakan miskin jika rata-rata pengeluaran per kapita per bulannya berada di bawah garis kemiskinan tersebut. (Sumber: Series Data Lampung 2015-2025.xlsx dan Series Data Lampung 2015-2025\\_1.pdf)\n3.  **Indeks Kedalaman Kemiskinan/Poverty Gap Index (P1):** Ukuran rata-rata kesenjangan pengeluaran masing-masing penduduk miskin terhadap garis kemiskinan. Indeks ini dapat menunjukkan seberapa jauh penduduk miskin berada di bawah garis kemiskinan. (Sumber: Series Data Lampung 2015-2025.xlsx dan Series Data Lampung 2015-2025\\_1.pdf)\n4.  **Indeks Keparahan Kemiskinan (Poverty Severity Index-P):** Memberikan gambaran mengenai penyebaran pengeluaran di antara penduduk miskin. Semakin tinggi nilai indeks, semakin tinggi ketimpangan pengeluaran di antara penduduk miskin. (Sumber: provinsi-lampung-dalam-angka-2025\\_compressed.pdf)\n\nSayangnya, dokumen yang tersedia tidak memberikan data numerik spesifik mengenai nilai atau perubahan tingkat kemiskinan dari tahun ke tahun. Dokumen hanya memberikan definisi dan penjelasan mengenai indikator-indikator yang terkait dengan kemiskinan.\n",
+    "is_document_related": true,
+    "message_length": 40,
+    "response_length": 1725,
+    "tokens_used": 3266
+  },
+  {
+    "timestamp": "2025-07-27T14:58:52.408754",
+    "user_message": "saya mau tahu data tentang Persentase Terhadap Luas Provinsi  untuk  kabupaten pesawaran tahun 2024",
+    "bot_response": "Berdasarkan dokumen yang tersedia, data mengenai Persentase Terhadap Luas Provinsi untuk Kabupaten Pesawaran tidak ditemukan.\n",
+    "is_document_related": true,
+    "message_length": 99,
+    "response_length": 126,
+    "tokens_used": 3419
+  },
+  {
+    "timestamp": "2025-07-27T14:59:49.022634",
+    "user_message": "saya mau tahu data tentang Persentase Luas total kabupaten Terhadap Luas Provinsi untuk kabupaten pesawaran tahun 2024\n\n",
+    "bot_response": "Berdasarkan dokumen yang tersedia, data mengenai persentase luas total Kabupaten Pesawaran terhadap luas Provinsi Lampung tidak ditemukan secara spesifik untuk tahun 2024.\n\nNamun, saya menemukan data terkait luas wilayah dan jumlah pulau di Kabupaten Pesawaran dari dokumen \"provinsi-lampung-dalam-angka-2025_compressed.pdf\" (Bagian 191):\n\n*   Kabupaten Pesawaran: 3,84% dari luas Provinsi Lampung\n*   Jumlah Pulau: 36\n\nPerlu dicatat bahwa data ini berasal dari tahun 2022 (berdasarkan sumber: Kementrian Dalam Negeri, Keputusan Menteri Dalam Negeri Nomor 100.1.1-6117 Tahun 2022).\n",
+    "is_document_related": true,
+    "message_length": 120,
+    "response_length": 582,
+    "tokens_used": 3475
+  },
+  {
+    "timestamp": "2025-07-27T15:09:21.199161",
+    "user_message": "saya mau tahu data Susunan Panitia dan Keanggotaan Alat Perlengkapan Dewan Periode Tahun 2019–2024 di Provinsi Lampung untuk bagian fraksi fraksi\n",
+    "bot_response": "Mohon maaf, informasi mengenai data Susunan Panitia dan Keanggotaan Alat Perlengkapan Dewan Periode Tahun 2019–2024 di Provinsi Lampung untuk bagian fraksi-fraksi tidak tersedia dalam dokumen yang diberikan. Dokumen hanya memberikan informasi mengenai:\n\n*   Jumlah anggota DPRD menurut kabupaten/kota dan jenis kelamin.\n*   Susunan panitia dan keanggotaan alat perlengkapan dewan periode 2019-2024 secara umum, termasuk jumlah pimpinan dewan (Ketua dan Wakil Ketua) dan jumlah anggota komisi-komisi.\n*   Kegiatan DPRD Provinsi Lampung.\n\n**Sumber:**\n\n*   provinsi-lampung-dalam-angka-2025\\_compressed.pdf\n*   provinsi-lampung-dalam-angka-2024\\_compressed (2).pdf\n",
+    "is_document_related": true,
+    "message_length": 146,
+    "response_length": 662,
+    "tokens_used": 3449
+  },
+  {
+    "timestamp": "2025-07-27T15:10:03.722088",
+    "user_message": "berapa jumlah populasi metro tahun 2024\n",
+    "bot_response": "Jumlah populasi di Metro pada tahun 2024 tidak dapat ditemukan dalam dokumen yang tersedia. Namun, terdapat informasi mengenai jumlah penduduk berumur 15 tahun ke atas di Metro pada tahun 2024, yaitu 133.547 jiwa. (Sumber: provinsi-lampung-dalam-angka-2025_compressed.pdf)\n\nSelain itu, ada data mengenai jumlah kendaraan bermotor di Kota Metro pada tahun 2023, yaitu 13.227 Bus, 101 Truk, 5.453 Sepeda Motor, dengan total 113.669 kendaraan. (Sumber: provinsi-lampung-dalam-angka-2024_compressed (2).pdf)\n",
+    "is_document_related": true,
+    "message_length": 40,
+    "response_length": 504,
+    "tokens_used": 3242
+  },
+  {
+    "timestamp": "2025-07-27T15:10:28.225998",
+    "user_message": "kalau jumlah populasi mesuji tahun 2024 berapa?",
+    "bot_response": "Jumlah populasi Mesuji pada tahun 2024 tidak tersedia secara eksplisit dalam dokumen-dokumen yang diberikan.\n\nNamun, ada informasi mengenai jumlah penduduk berumur 15 tahun ke atas di Kabupaten Mesuji pada tahun 2024, yaitu 178.340 jiwa. Data ini terdapat dalam dokumen \"provinsi-lampung-dalam-angka-2025_compressed.pdf\" (Bagian 475).\n\nSelain itu, terdapat informasi mengenai jumlah kendaraan bermotor di Mesuji pada tahun 2024:\n\n*   Mobil Penumpang: 4.168\n*   Bus: 30\n*   Truk: 3.501\n*   Sepeda Motor: 64.472\n*   Jumlah Total Kendaraan: 72.171\n\nData ini bersumber dari dokumen \"provinsi-lampung-dalam-angka-2025_compressed.pdf\" (Bagian 1915).",
+    "is_document_related": true,
+    "message_length": 47,
+    "response_length": 643,
+    "tokens_used": 3405
+  },
+  {
+    "timestamp": "2025-07-27T15:13:54.273809",
+    "user_message": "data dan informasi apa yang kamu ketahui tentang tabel 4.2.7 di provinsi lampung dalam angka tahun 2025",
+    "bot_response": "Maaf, berdasarkan dokumen yang tersedia, saya tidak memiliki informasi mengenai tabel 4.2.7 di Provinsi Lampung Dalam Angka tahun 2025.\n",
+    "is_document_related": true,
+    "message_length": 103,
+    "response_length": 136,
+    "tokens_used": 3308
+  },
+  {
+    "timestamp": "2025-07-27T15:14:35.779089",
+    "user_message": "data dan infomasi apa yang kamu ketahui tentang Jumlah Rumah Sakit Umum, Rumah Sakit Khusus,\ndan Puskesmas Menurut Kabupaten/Kota di Provinsi\nLampung, 2023 dan 2024",
+    "bot_response": "Jumlah Rumah Sakit Umum, Rumah Sakit Khusus, dan Puskesmas menurut Kabupaten/Kota di Provinsi Lampung pada tahun 2023 dan 2024 tersedia dalam dokumen \"provinsi-lampung-dalam-angka-2025_compressed.pdf\".\n\nBerikut adalah data yang tersedia:\n\n**Tabel Jumlah Rumah Sakit Umum, Rumah Sakit Khusus, dan Puskesmas Menurut Kabupaten/Kota di Provinsi Lampung, 2023 dan 2024**\n\n| Kabupaten/Kota     | Rumah Sakit Umum (2023) | Rumah Sakit Umum (2024) | Rumah Sakit Khusus (2023) | Rumah Sakit Khusus (2024) |\n| ------------------ | ----------------------- | ----------------------- | ------------------------- | ------------------------- |\n| Lampung Barat       | 1                       | 1                       | 1                         | 1                         |\n| Tanggamus           | 2                       | 2                       | -                         | -                         |\n\n*Catatan: Simbol \"–\" mungkin menandakan tidak ada atau tidak dilaporkan.*\n\n**Interpretasi:**\n\n*   Lampung Barat memiliki 1 Rumah Sakit Umum dan 1 Rumah Sakit Khusus yang sama pada tahun 2023 dan 2024.\n*   Tanggamus memiliki 2 Rumah Sakit Umum pada tahun 2023 dan 2024, tetapi tidak memiliki Rumah Sakit Khusus yang dilaporkan.\n\nInformasi lebih detail mengenai jumlah puskesmas dan data untuk kabupaten/kota lain dapat ditemukan di dokumen \"provinsi-lampung-dalam-angka-2025_compressed.pdf\".\n",
+    "is_document_related": true,
+    "message_length": 164,
+    "response_length": 1385,
+    "tokens_used": 3284
+  },
+  {
+    "timestamp": "2025-07-27T15:15:36.761229",
+    "user_message": "data dan infomasi apa yang kamu ketahui tentang Jumlah Rumah Sakit Umum, Rumah Sakit Khusus, dan Puskesmas Menurut Kabupaten/Kota di Provinsi Lampung, 2023 dan 2024 untuk seluruh kabupaten ",
+    "bot_response": "Baik, berikut adalah informasi mengenai jumlah Rumah Sakit Umum, Rumah Sakit Khusus, dan Puskesmas menurut Kabupaten/Kota di Provinsi Lampung pada tahun 2023 dan 2024, berdasarkan dokumen yang Anda berikan:\n\n**Data Jumlah Rumah Sakit dan Puskesmas**\n\nBerikut adalah data yang tersedia dari dokumen \"provinsi-lampung-dalam-angka-2025_compressed.pdf\":\n\n| Kabupaten/Kota     | Rumah Sakit Umum (2023) | Rumah Sakit Umum (2024) | Rumah Sakit Khusus (2023) | Rumah Sakit Khusus (2024) |\n| ------------------ | ----------------------- | ----------------------- | ------------------------- | ------------------------- |\n| Lampung Barat       | 1                       | 1                       | 1                         | 1                         |\n| Tanggamus           | 2                       | 2                       | -                         | -                         |\n\n**Catatan:**\n\n*   Tanda \"-\" menunjukkan bahwa data tidak tersedia dalam dokumen.\n*   Dokumen ini hanya menyediakan data untuk sebagian kabupaten/kota di Lampung.\n\n**Interpretasi:**\n\nDari data yang tersedia, dapat dilihat bahwa jumlah Rumah Sakit Umum dan Rumah Sakit Khusus di Lampung Barat tidak mengalami perubahan dari tahun 2023 ke 2024. Sementara itu, Tanggamus memiliki 2 Rumah Sakit Umum dan tidak memiliki Rumah Sakit Khusus pada tahun 2023 dan 2024.\n\n**Sumber:**\n\n*   provinsi-lampung-dalam-angka-2025\\_compressed.pdf (Bagian 918)\n\nSaya tidak menemukan informasi mengenai jumlah puskesmas untuk seluruh kabupaten/kota di Provinsi Lampung pada tahun 2023 dan 2024 dalam dokumen yang Anda berikan.",
+    "is_document_related": true,
+    "message_length": 189,
+    "response_length": 1582,
+    "tokens_used": 3313
+  },
+  {
+    "timestamp": "2025-07-27T15:25:35.890958",
+    "user_message": "saya mau tahu data tentang Jumlah Rumah Sakit Umum, Rumah Sakit Khusus,\ndan Puskesmas Menurut Kabupaten/Kota di Provinsi\nLampung, 2023 dan 2024\n",
+    "bot_response": "Baik, berikut adalah informasi mengenai Jumlah Rumah Sakit Umum, Rumah Sakit Khusus, dan Puskesmas Menurut Kabupaten/Kota di Provinsi Lampung, 2023 dan 2024 berdasarkan dokumen yang Anda berikan:\n\n**Data Jumlah Rumah Sakit dan Puskesmas**\n\nBerikut adalah data yang tersedia dari dokumen \"provinsi-lampung-dalam-angka-2025_compressed.pdf\":\n\n| Kabupaten/Kota     | Rumah Sakit Umum 2023 | Rumah Sakit Umum 2024 | Rumah Sakit Khusus 2023 | Rumah Sakit Khusus 2024 |\n| ------------------- | ---------------------- | ---------------------- | ------------------------ | ------------------------ |\n| Lampung Barat        | 1                      | 1                      | 1                        | 1                        |\n| Tanggamus           | 2                      | 2                      | –                        | –                        |\n\n**Interpretasi:**\n\n*   Lampung Barat memiliki jumlah Rumah Sakit Umum dan Khusus yang sama pada tahun 2023 dan 2024.\n*   Tanggamus memiliki jumlah Rumah Sakit Umum yang sama pada tahun 2023 dan 2024, dan tidak memiliki Rumah Sakit Khusus.\n\n**Catatan:**\n\n*   Simbol \"–\" menunjukkan bahwa data tidak tersedia atau tidak ada.\n*   Untuk data kabupaten/kota lainnya dan data Puskesmas, silakan merujuk pada dokumen aslinya (\"provinsi-lampung-dalam-angka-2025_compressed.pdf\").\n\n**Sumber:**\n\n*   provinsi-lampung-dalam-angka-2025_compressed.pdf (Bagian 918)\n",
+    "is_document_related": true,
+    "message_length": 144,
+    "response_length": 1401,
+    "tokens_used": 3207
+  },
+  {
+    "timestamp": "2025-07-27T15:43:44.074944",
+    "user_message": "saya ingin mengetahui data Jumlah Rumah Sakit Umum, Rumah Sakit Khusus,\ndan Puskesmas Menurut Kabupaten/Kota di Provinsi\nLampung, 2023 dan 2024 di setiap kabupaten",
+    "bot_response": "Berikut adalah data Jumlah Rumah Sakit Umum, Rumah Sakit Khusus, dan Puskesmas Menurut Kabupaten/Kota di Provinsi Lampung, 2023 dan 2024:\n\n**Data Rumah Sakit Umum dan Rumah Sakit Khusus**\n\n| Kabupaten/Kota   | Rumah Sakit Umum 2023 | Rumah Sakit Umum 2024 | Rumah Sakit Khusus 2023 | Rumah Sakit Khusus 2024 |\n| ----------------- | ---------------------- | ---------------------- | ------------------------ | ------------------------ |\n| Lampung Barat      | 1                      | 1                      | 1                         | 1                         |\n| Tanggamus          | 2                      | 2                      | –                         | –                         |\n\n**Interpretasi:**\n\n*   Di Kabupaten Lampung Barat, jumlah Rumah Sakit Umum dan Rumah Sakit Khusus tidak mengalami perubahan dari tahun 2023 ke 2024.\n*   Di Kabupaten Tanggamus, jumlah Rumah Sakit Umum juga tidak mengalami perubahan dari tahun 2023 ke 2024. Kabupaten ini tidak memiliki Rumah Sakit Khusus pada tahun 2023 dan 2024.\n\n**Sumber:** provinsi-lampung-dalam-angka-2025\\_compressed.pdf (Bagian 917)\n\nUntuk data puskesmas di setiap kabupaten, data tersebut tidak tersedia dalam dokumen yang diberikan.",
+    "is_document_related": true,
+    "message_length": 163,
+    "response_length": 1203,
+    "tokens_used": 3169
+  }
+]
