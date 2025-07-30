@@ -218,7 +218,7 @@ class ImprovedDocumentProcessor:
         self.cache_file = DOCUMENTS_CACHE_FILE
         self.hash_file = DOCUMENTS_HASH_FILE
         
-        self.load_or_cache_documents()
+        
     
     def get_file_hash(self, file_path):
         """Menghitung hash dari satu file berdasarkan modified time dan size"""
@@ -1823,22 +1823,6 @@ def main():
     
     page = st.sidebar.selectbox("Pilih Halaman:", ["👤 User Chat", "👨‍💼 Admin Dashboard"])
     
-    # Update informasi dokumen di sidebar
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("📁 **Status Dokumen**")
-    if st.session_state.document_processor.document_contents:
-        st.sidebar.success(f"✅ {len(st.session_state.document_processor.document_contents)} dokumen dimuat")
-        total_chunks = sum(len(chunks) for chunks in st.session_state.document_processor.document_chunks.values())
-        st.sidebar.info(f"📄 {total_chunks} segmen data")
-        
-        # Tampilkan info cache
-        cache_info = st.session_state.document_processor.get_cache_info()
-        if cache_info['cache_exists']:
-            st.sidebar.success("💾 Cache aktif")
-        else:
-            st.sidebar.warning("💾 Cache tidak ada")
-    else:
-        st.sidebar.error("❌ Tidak ada dokumen yang dimuat")
     
     # Routing halaman
     if page == "👤 User Chat":
