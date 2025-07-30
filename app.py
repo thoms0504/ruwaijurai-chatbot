@@ -2005,7 +2005,7 @@ class ConfigManager:
             "max_session_tokens": 10000,
             "chunk_size": 1000,
             "max_context_length": 30000,
-            "documents_folder_path": r"C:\Users\asus\python\chatbotpdf\files",
+            "documents_folder_path": r"files",
             "gemini_model": "gemini-2.0-flash-exp",
             "admin_credentials": {
                 "username": "admin",
