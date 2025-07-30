@@ -349,7 +349,7 @@ class ImprovedDocumentProcessor:
         # Display cache status
         if cache_loaded:
             if files_from_cache:
-                st.success(f"📁 {len(files_from_cache)} dokumen dimuat dari cache")
+                st.success("Data telah tersimpan")
             
             if files_removed:
                 st.info(f"🗑️ {len(files_removed)} file lama dihapus dari cache")
@@ -388,7 +388,7 @@ class ImprovedDocumentProcessor:
                 st.error("❌ Gagal menyimpan cache")
         
         elif cache_loaded and files_from_cache:
-            st.success("🚀 Semua dokumen dimuat dari cache (instan)")
+            st.success("🚀Model siap digunakan")
         
         # Summary
         total_docs = len(self.document_contents)
