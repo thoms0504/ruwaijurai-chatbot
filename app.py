@@ -46,7 +46,7 @@ DOCUMENTS_CACHE_FILE = "documents_cache.pkl"
 DOCUMENTS_HASH_FILE = "documents_hash.json"
 
 # Path ke folder dokumen
-DOCUMENTS_FOLDER_PATH = r"C:\Users\asus\python\chatbotpdf\files"
+DOCUMENTS_FOLDER_PATH = r"files"
 
 # File untuk menyimpan log chat
 CHAT_LOG_FILE = "chat_logs.json"
