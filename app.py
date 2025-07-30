@@ -300,7 +300,7 @@ class ImprovedDocumentProcessor:
             return True
         except Exception as e:
             st.error(f"Gagal menyimpan cache: {str(e)}")
-            return False
+            return Falseload_or_cache_documents
     
     def load_or_cache_documents(self):
         """Load dokumen dengan incremental caching"""
@@ -383,7 +383,7 @@ class ImprovedDocumentProcessor:
             
             # Save updated cache
             if self.save_cache():
-                st.success("💾 Cache berhasil diperbarui")
+                st.success("💾 Berhasil memuat data")
             else:
                 st.error("❌ Gagal menyimpan cache")
         
@@ -394,10 +394,7 @@ class ImprovedDocumentProcessor:
         total_docs = len(self.document_contents)
         total_chunks = sum(len(chunks) for chunks in self.document_chunks.values())
         
-        if total_docs > 0:
-            st.info(f"📊 Total: {total_docs} dokumen, {total_chunks} segmen data")
-        else:
-            st.warning("⚠️ Tidak ada dokumen yang berhasil dimuat")
+        
     
     def process_single_document(self, filename, file_path):
         """Memproses satu dokumen"""
