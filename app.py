@@ -217,7 +217,7 @@ class ImprovedDocumentProcessor:
         # File cache terpisah
         self.cache_file = DOCUMENTS_CACHE_FILE
         self.hash_file = DOCUMENTS_HASH_FILE
-        self.load_or_cache_documents()
+        
         
     
     def get_file_hash(self, file_path):
@@ -300,7 +300,7 @@ class ImprovedDocumentProcessor:
             return True
         except Exception as e:
             st.error(f"Gagal menyimpan cache: {str(e)}")
-            return Falseload_or_cache_documents
+            return False
     
     def load_or_cache_documents(self):
         """Load dokumen dengan incremental caching"""
