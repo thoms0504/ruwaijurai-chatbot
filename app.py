@@ -217,6 +217,7 @@ class ImprovedDocumentProcessor:
         # File cache terpisah
         self.cache_file = DOCUMENTS_CACHE_FILE
         self.hash_file = DOCUMENTS_HASH_FILE
+        self.load_or_cache_documents()
         
         
     
