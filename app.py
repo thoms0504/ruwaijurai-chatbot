@@ -27,8 +27,6 @@ from PIL import Image
 import openpyxl
 from openpyxl import load_workbook
 import csv
-import sqlite3
-import gzip
 
 # Load icon
 icon = Image.open("assets/logo_bps.png")
@@ -43,10 +41,9 @@ st.set_page_config(
 # Konfigurasi Gemini API 
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
-# Cache files
+# Cache files (updated names)
 DOCUMENTS_CACHE_FILE = "documents_cache.pkl"
 DOCUMENTS_HASH_FILE = "documents_hash.json"
-SQLITE_CACHE_DB = "chatbot_cache.db"
 
 # Path ke folder dokumen
 DOCUMENTS_FOLDER_PATH = r"files"
@@ -58,46 +55,71 @@ CHAT_LOG_FILE = "chat_logs.json"
 MAX_USER_MESSAGE_TOKENS = 1500
 MAX_SESSION_TOKENS = 10000
 
-# Indonesian stopwords
+# Indonesian stopwords - comprehensive list
 INDONESIAN_STOPWORDS = {
+    # Kata hubung
     'dan', 'atau', 'tetapi', 'namun', 'serta', 'kemudian', 'lalu', 'setelah', 'sebelum',
     'ketika', 'saat', 'sambil', 'selama', 'hingga', 'sampai', 'karena', 'sebab',
     'oleh', 'karena', 'akibat', 'supaya', 'agar', 'untuk', 'demi', 'guna',
+    
+    # Kata depan
     'di', 'ke', 'dari', 'pada', 'dalam', 'dengan', 'oleh', 'bagi', 'untuk',
     'tentang', 'mengenai', 'terhadap', 'atas', 'bawah', 'antara', 'antar',
     'selain', 'kecuali', 'hingga', 'sampai', 'sejak', 'semenjak',
+    
+    # Kata ganti
     'saya', 'aku', 'kamu', 'anda', 'dia', 'ia', 'mereka', 'kita', 'kami',
     'ini', 'itu', 'tersebut', 'berikut', 'yang', 'mana', 'siapa', 'apa',
     'dimana', 'kemana', 'darimana', 'bagaimana', 'mengapa', 'kenapa',
     'kapan', 'bilamana', 'berapa', 'seberapa',
+    
+    # Kata kerja bantu
     'adalah', 'ialah', 'merupakan', 'yakni', 'yaitu', 'akan', 'sedang',
     'telah', 'sudah', 'pernah', 'belum', 'masih', 'sempat', 'baru',
     'dapat', 'bisa', 'mampu', 'sanggup', 'mau', 'ingin', 'hendak',
     'harus', 'wajib', 'perlu', 'butuh', 'boleh', 'jangan', 'tidak',
     'tak', 'bukan', 'belum', 'tanpa', 'kecuali', 'selain',
+    
+    # Kata keterangan
     'sangat', 'amat', 'sekali', 'banget', 'terlalu', 'cukup', 'agak',
     'sedikit', 'banyak', 'seluruh', 'semua', 'selalu', 'sering',
     'jarang', 'kadang', 'pernah', 'tidak', 'juga', 'pula', 'lagi',
     'masih', 'sudah', 'belum', 'baru', 'lama', 'sekarang', 'kini',
     'nanti', 'besok', 'kemarin', 'tadi', 'dulu', 'dahulu', 'lampau',
     'mendatang', 'akan', 'bakal', 'segera', 'langsung', 'seketika',
+    
+    # Kata penghubung waktu
     'ketika', 'saat', 'waktu', 'sewaktu', 'tatkala', 'manakala',
     'selagi', 'sementara', 'sambil', 'seraya', 'sembari',
+    
+    # Kata penghubung sebab akibat
     'karena', 'sebab', 'lantaran', 'gara', 'akibat', 'dampak',
     'sehingga', 'makanya', 'jadi', 'maka', 'oleh', 'karenanya',
+    
+    # Kata penghubung tujuan
     'untuk', 'bagi', 'demi', 'guna', 'agar', 'supaya', 'biar',
+    
+    # Kata penghubung syarat
     'jika', 'kalau', 'bila', 'bilamana', 'manakala', 'seandainya',
     'andaikan', 'sekiranya', 'apabila', 'asalkan', 'asal',
+    
+    # Kata penghubung pertentangan
     'tetapi', 'namun', 'akan', 'tapi', 'sedangkan', 'sementara',
     'padahal', 'meskipun', 'walaupun', 'sekalipun', 'biarpun',
     'kendatipun', 'sungguhpun', 'walau', 'biar',
+    
+    # Kata seru
     'oh', 'ah', 'eh', 'wah', 'aduh', 'astaga', 'ya', 'iya', 'yah',
     'deh', 'sih', 'kok', 'loh', 'dong', 'kan', 'kah', 'lah',
+    
+    # Kata bilangan
     'satu', 'dua', 'tiga', 'empat', 'lima', 'enam', 'tujuh', 'delapan',
     'sembilan', 'sepuluh', 'sebelas', 'dua belas', 'puluh', 'ratus',
     'ribu', 'juta', 'miliar', 'triliun', 'pertama', 'kedua', 'ketiga',
     'keempat', 'kelima', 'keenam', 'ketujuh', 'kedelapan', 'kesembilan',
     'kesepuluh', 'pertama', 'kedua', 'ketiga',
+    
+    # Kata umum lainnya
     'ada', 'mana', 'jadi', 'begitu', 'seperti', 'ibarat', 'bagai',
     'seolah', 'seakan', 'seumpama', 'umpama', 'misalnya', 'contohnya',
     'yakni', 'yaitu', 'ialah', 'adalah', 'merupakan', 'berupa',
@@ -119,9 +141,11 @@ INDONESIAN_STOPWORDS = {
 def get_indonesian_stopwords():
     """Mendapatkan stopwords bahasa Indonesia menggunakan Sastrawi"""
     try:
+        # Menggunakan Sastrawi untuk stopwords yang lebih lengkap
         factory = StopWordRemoverFactory()
         stopwords = factory.get_stop_words()
         
+        # Tambahkan stopwords manual jika diperlukan
         additional_stopwords = {
             'yg', 'dgn', 'utk', 'dg', 'ttg', 'tsb', 'krn', 'pd', 'tdk', 'tdk',
             'gan', 'min', 'bang', 'bro', 'sis', 'om', 'tante', 'kak', 'dek',
@@ -129,12 +153,15 @@ def get_indonesian_stopwords():
             'oke', 'ok', 'thanks', 'thank', 'you', 'makasih', 'terima', 'kasih'
         }
         
+        # Gabungkan dengan stopwords tambahan
         all_stopwords = set(stopwords) | additional_stopwords
         return all_stopwords
         
     except ImportError:
+        # Jika Sastrawi tidak tersedia, gunakan stopwords manual
         return INDONESIAN_STOPWORDS
 
+# Token Counter Class
 class TokenCounter:
     """Class untuk menghitung token dalam bahasa Indonesia"""
     
@@ -143,6 +170,7 @@ class TokenCounter:
         """Menghitung token dengan perkiraan untuk bahasa Indonesia"""
         if not text:
             return 0
+        # Perkiraan: 1 token ≈ 3-4 karakter untuk bahasa Indonesia
         return len(text) // 3
     
     @staticmethod
@@ -159,9 +187,11 @@ class TokenCounter:
         if not messages:
             return messages
             
+        # Hitung token dari belakang
         total_tokens = 0
         trimmed_messages = []
         
+        # Mulai dari pesan terbaru
         for message in reversed(messages):
             message_tokens = TokenCounter.count_tokens(message["content"])
             if total_tokens + message_tokens <= max_tokens:
@@ -172,207 +202,24 @@ class TokenCounter:
         
         return trimmed_messages
 
-class SQLiteCacheManager:
-    def __init__(self, db_path=SQLITE_CACHE_DB):
-        self.db_path = db_path
-        self.init_database()
-    
-    def init_database(self):
-        """Inisialisasi database SQLite"""
-        try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS document_cache (
-                    filename TEXT PRIMARY KEY,
-                    file_hash TEXT,
-                    content TEXT,
-                    chunks TEXT,
-                    processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    file_size INTEGER,
-                    file_type TEXT
-                )
-            ''')
-            
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS cache_metadata (
-                    key TEXT PRIMARY KEY,
-                    value TEXT,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            ''')
-            
-            conn.commit()
-            conn.close()
-            
-        except Exception as e:
-            st.error(f"Error initializing database: {str(e)}")
-    
-    def save_document_cache(self, filename, file_hash, content, chunks):
-        """Simpan cache dokumen ke database"""
-        try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            compressed_content = gzip.compress(content.encode('utf-8'))
-            compressed_chunks = gzip.compress(json.dumps(chunks).encode('utf-8'))
-            
-            content_b64 = base64.b64encode(compressed_content).decode('utf-8')
-            chunks_b64 = base64.b64encode(compressed_chunks).decode('utf-8')
-            
-            cursor.execute('''
-                INSERT OR REPLACE INTO document_cache 
-                (filename, file_hash, content, chunks, file_size, file_type)
-                VALUES (?, ?, ?, ?, ?, ?)
-            ''', (
-                filename, 
-                file_hash, 
-                content_b64, 
-                chunks_b64,
-                len(content),
-                os.path.splitext(filename)[1].lower()
-            ))
-            
-            conn.commit()
-            conn.close()
-            return True
-            
-        except Exception as e:
-            st.error(f"Error saving to database: {str(e)}")
-            return False
-    
-    def load_document_cache(self, filename):
-        """Load cache dokumen dari database"""
-        try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            cursor.execute('''
-                SELECT file_hash, content, chunks FROM document_cache 
-                WHERE filename = ?
-            ''', (filename,))
-            
-            result = cursor.fetchone()
-            conn.close()
-            
-            if result:
-                file_hash, content_b64, chunks_b64 = result
-                
-                content_compressed = base64.b64decode(content_b64.encode('utf-8'))
-                chunks_compressed = base64.b64decode(chunks_b64.encode('utf-8'))
-                
-                content = gzip.decompress(content_compressed).decode('utf-8')
-                chunks = json.loads(gzip.decompress(chunks_compressed).decode('utf-8'))
-                
-                return {
-                    'file_hash': file_hash,
-                    'content': content,
-                    'chunks': chunks
-                }
-            
-            return None
-            
-        except Exception as e:
-            st.error(f"Error loading from database: {str(e)}")
-            return None
-    
-    def get_all_cached_files(self):
-        """Mendapatkan daftar semua file yang ter-cache"""
-        try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            cursor.execute('SELECT filename, file_hash, processed_at, file_size FROM document_cache')
-            results = cursor.fetchall()
-            conn.close()
-            
-            return {
-                row[0]: {
-                    'file_hash': row[1],
-                    'processed_at': row[2],
-                    'file_size': row[3]
-                }
-                for row in results
-            }
-            
-        except Exception as e:
-            st.error(f"Error getting cached files: {str(e)}")
-            return {}
-    
-    def remove_document_cache(self, filename):
-        """Hapus cache dokumen dari database"""
-        try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            cursor.execute('DELETE FROM document_cache WHERE filename = ?', (filename,))
-            
-            conn.commit()
-            conn.close()
-            return True
-            
-        except Exception as e:
-            st.error(f"Error removing from database: {str(e)}")
-            return False
-    
-    def clear_all_cache(self):
-        """Hapus semua cache"""
-        try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            cursor.execute('DELETE FROM document_cache')
-            cursor.execute('DELETE FROM cache_metadata')
-            
-            conn.commit()
-            conn.close()
-            return True
-            
-        except Exception as e:
-            st.error(f"Error clearing cache: {str(e)}")
-            return False
-    
-    def get_cache_stats(self):
-        """Mendapatkan statistik cache"""
-        try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            cursor.execute('SELECT COUNT(*) FROM document_cache')
-            doc_count = cursor.fetchone()[0]
-            
-            cursor.execute('SELECT SUM(file_size) FROM document_cache')
-            total_size = cursor.fetchone()[0] or 0
-            
-            cursor.execute('SELECT file_type, COUNT(*) FROM document_cache GROUP BY file_type')
-            file_types = dict(cursor.fetchall())
-            
-            conn.close()
-            
-            return {
-                'total_documents': doc_count,
-                'total_size': total_size,
-                'file_types': file_types
-            }
-            
-        except Exception as e:
-            st.error(f"Error getting cache stats: {str(e)}")
-            return {'total_documents': 0, 'total_size': 0, 'file_types': {}}
-
-class PersistentDocumentProcessor:
+class ImprovedDocumentProcessor:
     def __init__(self, documents_folder_path):
         self.documents_folder_path = documents_folder_path
         self.document_contents = {}
         self.document_chunks = {}
-        self.document_hashes = {}
+        self.document_hashes = {}  # Menyimpan hash per file
         self.chunk_size = 1000
         self.max_context_length = 30000
+        
+        # PERBAIKAN: Inisialisasi table_contexts
         self.table_contexts = {}
         
-        self.sqlite_cache = SQLiteCacheManager()
+        # File cache terpisah
+        self.cache_file = DOCUMENTS_CACHE_FILE
+        self.hash_file = DOCUMENTS_HASH_FILE
+        self.load_or_cache_documents()
         
-        self.load_or_cache_documents_persistent()
+        
     
     def get_file_hash(self, file_path):
         """Menghitung hash dari satu file berdasarkan modified time dan size"""
@@ -403,42 +250,115 @@ class PersistentDocumentProcessor:
         
         return document_files
     
-    def load_or_cache_documents_persistent(self):
-        """Load dokumen dengan persistent caching"""
+    def load_existing_cache(self):
+        """Memuat cache yang sudah ada"""
+        try:
+            if os.path.exists(self.cache_file) and os.path.exists(self.hash_file):
+                # Load cached data
+                with open(self.cache_file, 'rb') as f:
+                    cached_data = pickle.load(f)
+                
+                # Load hash data
+                with open(self.hash_file, 'r', encoding='utf-8') as f:
+                    hash_data = json.load(f)
+                
+                self.document_contents = cached_data.get('document_contents', {})
+                self.document_chunks = cached_data.get('document_chunks', {})
+                self.document_hashes = hash_data.get('file_hashes', {})
+                
+                return True
+        except Exception as e:
+            st.warning(f"Gagal memuat cache existing: {str(e)}")
+            # Reset jika cache corrupt
+            self.document_contents = {}
+            self.document_chunks = {}
+            self.document_hashes = {}
+        
+        return False
+    
+    def save_cache(self):
+        """Menyimpan cache ke file"""
+        try:
+            # Save document data
+            cache_data = {
+                'document_contents': self.document_contents,
+                'document_chunks': self.document_chunks,
+                'cached_at': datetime.now().isoformat()
+            }
+            
+            with open(self.cache_file, 'wb') as f:
+                pickle.dump(cache_data, f)
+            
+            # Save hash data
+            hash_data = {
+                'file_hashes': self.document_hashes,
+                'cached_at': datetime.now().isoformat()
+            }
+            
+            with open(self.hash_file, 'w', encoding='utf-8') as f:
+                json.dump(hash_data, f, indent=2, ensure_ascii=False)
+                
+            return True
+        except Exception as e:
+            st.error(f"Gagal menyimpan cache: {str(e)}")
+            return False
+    
+    def load_or_cache_documents(self):
+        """Load dokumen dengan incremental caching"""
+        # PERBAIKAN: Reset table_contexts setiap kali load ulang
         self.table_contexts = {}
         
+        # Load existing cache
+        cache_loaded = self.load_existing_cache()
+        
+        # Get current files
         current_files = self.get_all_document_files()
         
         if not current_files:
             st.warning("Tidak ada file dokumen yang ditemukan")
             return
         
-        cached_files_info = self.sqlite_cache.get_all_cached_files()
-        
+        # Determine which files need processing
         files_to_process = []
         files_from_cache = []
         files_removed = []
         
+        # Check for new or modified files
         for filename, file_info in current_files.items():
-            cached_info = cached_files_info.get(filename)
+            cached_hash = self.document_hashes.get(filename)
             current_hash = file_info['hash']
             
-            if not cached_info or cached_info['file_hash'] != current_hash:
+            if cached_hash != current_hash:
                 files_to_process.append((filename, file_info))
-            else:
-                cached_data = self.sqlite_cache.load_document_cache(filename)
-                if cached_data:
-                    self.document_contents[filename] = cached_data['content']
-                    self.document_chunks[filename] = cached_data['chunks']
-                    self.document_hashes[filename] = cached_data['file_hash']
-                    files_from_cache.append(filename)
+            elif filename in self.document_contents:
+                files_from_cache.append(filename)
         
-        for filename in cached_files_info.keys():
+        # Check for removed files
+        for filename in list(self.document_hashes.keys()):
             if filename not in current_files:
-                self.sqlite_cache.remove_document_cache(filename)
                 files_removed.append(filename)
         
+        # Remove deleted files from cache
+        for filename in files_removed:
+            if filename in self.document_contents:
+                del self.document_contents[filename]
+            if filename in self.document_chunks:
+                del self.document_chunks[filename]
+            if filename in self.document_hashes:
+                del self.document_hashes[filename]
         
+        # Display cache status
+        if cache_loaded:
+            if files_from_cache:
+                st.success("Data telah tersimpan")
+            
+            if files_removed:
+                st.info(f"🗑️ {len(files_removed)} file lama dihapus dari cache")
+                with st.expander("File yang dihapus"):
+                    for filename in files_removed:
+                        st.write(f"❌ {filename}")
+        
+        # Process new/modified files
         if files_to_process:
             st.info(f"🔄 Memproses {len(files_to_process)} dokumen baru/yang dimodifikasi...")
             
@@ -448,50 +368,35 @@ class PersistentDocumentProcessor:
             for i, (filename, file_info) in enumerate(files_to_process):
                 status_text.text(f"Memproses {filename}...")
                 
-                success = self.process_single_document_persistent(filename, file_info['path'], file_info['hash'])
+                success = self.process_single_document(filename, file_info['path'])
                 
+                if success:
+                    # Update hash setelah berhasil diproses
+                    self.document_hashes[filename] = file_info['hash']
+                    
+                    
                 
                 progress_bar.progress((i + 1) / len(files_to_process))
             
             status_text.empty()
             progress_bar.empty()
             
+            # Save updated cache
             
         
+        elif cache_loaded and files_from_cache:
+            st.success("🚀Model siap digunakan")
         
-        
+        # Summary
         total_docs = len(self.document_contents)
         total_chunks = sum(len(chunks) for chunks in self.document_chunks.values())
         
         
     
-    def process_single_document_persistent(self, filename, file_path, file_hash):
-        """Memproses satu dokumen dan simpan ke persistent storage"""
-        try:
-            success = self.process_single_document(filename, file_path)
-            
-            if success:
-                content = self.document_contents[filename]
-                chunks = self.document_chunks[filename]
-                
-                cache_success = self.sqlite_cache.save_document_cache(
-                    filename, file_hash, content, chunks
-                )
-                
-                if cache_success:
-                    self.document_hashes[filename] = file_hash
-                
-                return cache_success
-            
-            return success
-            
-        except Exception as e:
-            st.error(f"Error processing {filename}: {str(e)}")
-            return False
-    
     def process_single_document(self, filename, file_path):
         """Memproses satu dokumen"""
         try:
+            # PERBAIKAN: Reset table_contexts untuk setiap dokumen
             self.table_contexts = {}
             
             text_content = None
@@ -509,9 +414,11 @@ class PersistentDocumentProcessor:
                 text_content = self.extract_text_csv(file_path)
             
             if text_content:
+                # Clean and process text
                 text_content = self.clean_text(text_content)
                 self.document_contents[filename] = text_content
                 
+                # Create chunks
                 chunks = self.chunk_text(text_content, self.chunk_size)
                 self.document_chunks[filename] = chunks
                 
@@ -523,33 +430,49 @@ class PersistentDocumentProcessor:
             st.error(f"Error processing {filename}: {str(e)}")
             return False
     
-    def refresh_cache_persistent(self):
-        """Refresh cache dengan menghapus persistent storage"""
-        st.info("🔄 Menghapus semua cache persistent...")
+    def refresh_cache(self):
+        """Refresh cache dengan memuat ulang semua dokumen"""
+        st.info("🔄 Memuat ulang semua dokumen...")
         
+        # Clear existing data
         self.document_contents = {}
         self.document_chunks = {}
         self.document_hashes = {}
+        # PERBAIKAN: Reset table_contexts juga
         self.table_contexts = {}
         
-        self.sqlite_cache.clear_all_cache()
+        # Delete cache files
+        try:
+            if os.path.exists(self.cache_file):
+                os.remove(self.cache_file)
+            if os.path.exists(self.hash_file):
+                os.remove(self.hash_file)
+        except Exception as e:
+            st.warning(f"Gagal menghapus cache lama: {str(e)}")
         
-        self.load_or_cache_documents_persistent()
-        st.success("✅ Cache persistent berhasil diperbarui")
+        # Reload all documents
+        self.load_or_cache_documents()
     
     def get_cache_info(self):
         """Mendapatkan informasi cache"""
-        stats = self.sqlite_cache.get_cache_stats()
-        
         info = {
-            'cache_exists': os.path.exists(SQLITE_CACHE_DB),
-            'cache_size': os.path.getsize(SQLITE_CACHE_DB) if os.path.exists(SQLITE_CACHE_DB) else 0,
-            'cached_at': datetime.now().isoformat(),
-            'total_documents': stats['total_documents'],
+            'cache_exists': os.path.exists(self.cache_file) and os.path.exists(self.hash_file),
+            'cache_size': 0,
+            'cached_at': None,
+            'total_documents': len(self.document_contents),
             'total_chunks': sum(len(chunks) for chunks in self.document_chunks.values()),
-            'cached_files': list(self.document_hashes.keys()),
-            'file_types': stats['file_types']
+            'cached_files': list(self.document_hashes.keys())
         }
+        
+        if info['cache_exists']:
+            try:
+                info['cache_size'] = os.path.getsize(self.cache_file)
+                
+                with open(self.hash_file, 'r', encoding='utf-8') as f:
+                    hash_data = json.load(f)
+                    info['cached_at'] = hash_data.get('cached_at')
+            except:
+                pass
         
         return info
     
@@ -562,7 +485,8 @@ class PersistentDocumentProcessor:
         if filename in self.document_hashes:
             del self.document_hashes[filename]
         
-        self.sqlite_cache.remove_document_cache(filename)
+        # Save updated cache
+        self.save_cache()
         st.success(f"Dokumen {filename} berhasil dihapus dari cache")
     
     def extract_text_excel(self, excel_path):
@@ -575,21 +499,23 @@ class PersistentDocumentProcessor:
                 sheet = workbook[sheet_name]
                 text_content += f"\n=== Sheet: {sheet_name} ===\n"
                 
+                # Baca header dulu (baris pertama)
                 headers = []
                 first_row = next(sheet.iter_rows(min_row=1, max_row=1, values_only=True), None)
                 if first_row:
                     headers = [str(cell) if cell is not None else f"Column_{i+1}" for i, cell in enumerate(first_row)]
                     text_content += "Headers: " + " | ".join(headers) + "\n\n"
                 
+                # Baca data (mulai dari baris kedua)
                 for row_num, row in enumerate(sheet.iter_rows(min_row=2, values_only=True), start=2):
-                    if any(cell is not None for cell in row):
+                    if any(cell is not None for cell in row):  # Skip baris kosong
                         row_data = []
                         for i, cell in enumerate(row):
-                            if i < len(headers):
+                            if i < len(headers):  # Pastikan tidak melebihi jumlah header
                                 if cell is not None:
                                     row_data.append(f"{headers[i]}: {str(cell)}")
                         
-                        if row_data:
+                        if row_data:  # Jika ada data
                             text_content += f"Baris {row_num}: " + " | ".join(row_data) + "\n"
                 
                 text_content += "\n"
@@ -620,10 +546,12 @@ class PersistentDocumentProcessor:
                         
                         text_content += f"\n=== CSV File: {os.path.basename(csv_path)} ===\n"
                         
+                        # Tampilkan header
                         headers = csv_reader.fieldnames
                         if headers:
                             text_content += "Headers: " + " | ".join(headers) + "\n\n"
                         
+                        # Baca data
                         for row_num, row in enumerate(csv_reader, start=1):
                             row_data = []
                             for header, value in row.items():
@@ -648,32 +576,38 @@ class PersistentDocumentProcessor:
             return None
     
     def extract_text_pdfplumber(self, pdf_path):
-        """Ekstraksi teks menggunakan pdfplumber"""
+        """Ekstraksi teks menggunakan pdfplumber - bekerja untuk semua jenis PDF"""
         try:
             text_content = ""
             with pdfplumber.open(pdf_path) as pdf:
                 for page_num, page in enumerate(pdf.pages, 1):
                     page_text = page.extract_text()
                     
+                    # Analisis jenis halaman (akan return "Halaman Biasa" jika bukan tabel khusus)
                     page_type, table_info = self._analyze_page_type(page_text)
                     
                     if page_text:
+                        # Tampilkan jenis halaman hanya jika relevan
                         if page_type == "Halaman Biasa":
                             text_content += f"\n--- Halaman {page_num} ---\n"
                         else:
                             text_content += f"\n--- Halaman {page_num} ({page_type}) ---\n"
                             
+                            # Tambahkan referensi hanya untuk halaman lanjutan tabel
                             if page_type == "Lanjutan Tabel" and table_info and table_info in self.table_contexts:
                                 original_info = self.table_contexts[table_info]
                                 text_content += f"[REFERENSI: Melanjutkan {original_info['title']} dari Halaman {original_info['page']}]\n"
                         
                         text_content += page_text + "\n"
                     
+                    # Ekstraksi tabel - bekerja untuk semua jenis tabel
                     tables = page.extract_tables()
                     if tables:
                         for table_num, table in enumerate(tables, 1):
+                            # Tentukan nama tabel berdasarkan konteks
                             if page_type == "Tabel Utama" and table_info:
                                 table_title = f"{table_info} (Halaman {page_num})"
+                                # Simpan konteks untuk referensi masa depan
                                 self.table_contexts[table_info] = {
                                     'title': table_info,
                                     'page': page_num,
@@ -683,10 +617,12 @@ class PersistentDocumentProcessor:
                                 original_title = self.table_contexts[table_info]['title']
                                 table_title = f"Lanjutan {original_title} (Halaman {page_num})"
                             else:
+                                # Untuk PDF biasa tanpa pola khusus
                                 table_title = f"Tabel {table_num} pada Halaman {page_num}"
                             
                             text_content += f"\n--- {table_title} ---\n"
                             
+                            # Tampilkan header referensi hanya jika diperlukan
                             if (page_type == "Lanjutan Tabel" and table_info and 
                                 table_info in self.table_contexts and 
                                 self._is_continuation_without_headers(table)):
@@ -698,9 +634,11 @@ class PersistentDocumentProcessor:
                                     text_content += " | ".join(clean_headers) + "\n"
                                     text_content += "-" * 50 + "\n"
                             
+                            # Ekstraksi data tabel (standar untuk semua PDF)
                             for row_num, row in enumerate(table):
                                 if row:
                                     clean_row = [str(cell) if cell is not None else "" for cell in row]
+                                    # Tandai header jika terdeteksi
                                     if row_num == 0 and self._looks_like_header(row):
                                         text_content += "[HEADER] " + " | ".join(clean_row) + "\n"
                                     else:
@@ -713,11 +651,13 @@ class PersistentDocumentProcessor:
             return None
         
     def _analyze_page_type(self, page_text):
-        """Menganalisis jenis halaman berdasarkan teks"""
+        """Menganalisis jenis halaman berdasarkan teks - fleksibel untuk berbagai format PDF"""
         if not page_text:
             return "Unknown", None
         
+        # Pattern yang lebih fleksibel untuk berbagai format tabel
         patterns = {
+            # Format Indonesia
             'continued_id': [
                 r'Lanjutan\s+Tabel[/\\]?Continued\s+Table\s+(\d+(?:\.\d+)*)',
                 r'Lanjutan\s+Tabel\s+(\d+(?:\.\d+)*)',
@@ -731,6 +671,7 @@ class PersistentDocumentProcessor:
                 r'Lampiran\s+Tabel\s+(\d+(?:\.\d+)*)',
                 r'Appendix\s+Table\s+(\d+(?:\.\d+)*)',
             ],
+            # Format Inggris
             'continued_en': [
                 r'Continued\s+from\s+Table\s+(\d+(?:\.\d+)*)',
                 r'Table\s+(\d+(?:\.\d+)*)\s*\(Continued\)',
@@ -738,6 +679,7 @@ class PersistentDocumentProcessor:
             ]
         }
         
+        # Cek halaman lanjutan terlebih dahulu (prioritas tinggi)
         for pattern_list in [patterns['continued_id'], patterns['continued_en']]:
             for pattern in pattern_list:
                 match = re.search(pattern, page_text, re.IGNORECASE)
@@ -745,12 +687,14 @@ class PersistentDocumentProcessor:
                     table_number = match.group(1)
                     return "Lanjutan Tabel", f"Tabel {table_number}"
         
+        # Cek tabel utama
         for pattern in patterns['main_table_id']:
             match = re.search(pattern, page_text, re.IGNORECASE)
             if match:
                 table_number = match.group(1)
                 return "Tabel Utama", f"Tabel {table_number}"
         
+        # Jika tidak ada pattern yang cocok, kembalikan halaman biasa
         return "Halaman Biasa", None
     
     def _looks_like_header(self, row):
@@ -758,6 +702,7 @@ class PersistentDocumentProcessor:
         if not row:
             return False
         
+        # Heuristic: header biasanya mengandung kata-kata tertentu
         header_indicators = ['tahun', 'year', 'jumlah', 'number', 'modal', 'investment', 
                            'proyek', 'project', 'sektor', 'sector', 'industri', 'industry']
         
@@ -770,13 +715,14 @@ class PersistentDocumentProcessor:
             return True
         
         first_row = table[0]
+        # Jika baris pertama terlihat seperti data (angka, kode) bukan header
         if first_row and len([cell for cell in first_row if cell and str(cell).isdigit()]) > len(first_row) / 2:
             return True
         
         return not self._looks_like_header(first_row)
     
     def extract_text_pypdf2(self, pdf_path):
-        """Ekstraksi teks menggunakan PyPDF2"""
+        """Ekstraksi teks menggunakan PyPDF2 dengan penanganan lanjutan tabel"""
         try:
             text_content = ""
             with open(pdf_path, 'rb') as file:
@@ -784,10 +730,12 @@ class PersistentDocumentProcessor:
                 for page_num, page in enumerate(pdf_reader.pages, 1):
                     page_text = page.extract_text()
                     if page_text:
+                        # Analisis jenis halaman
                         page_type, table_info = self._analyze_page_type(page_text)
                         
                         text_content += f"\n--- Halaman {page_num} ({page_type}) ---\n"
                         
+                        # Tambahkan referensi jika halaman lanjutan
                         if page_type == "Lanjutan Tabel" and table_info:
                             if table_info in self.table_contexts:
                                 original_info = self.table_contexts[table_info]
@@ -795,11 +743,12 @@ class PersistentDocumentProcessor:
                         
                         text_content += page_text + "\n"
                         
+                        # Simpan konteks jika tabel utama
                         if page_type == "Tabel Utama" and table_info:
                             self.table_contexts[table_info] = {
                                 'title': table_info,
                                 'page': page_num,
-                                'headers': None
+                                'headers': None  # PyPDF2 tidak dapat ekstrak tabel terstruktur
                             }
             
             return text_content
@@ -837,9 +786,15 @@ class PersistentDocumentProcessor:
     
     def clean_text(self, text):
         """Membersihkan teks dari karakter yang tidak perlu"""
+        # Hapus karakter kontrol
         text = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]', '', text)
+        
+        # Normalisasi whitespace
         text = re.sub(r'\s+', ' ', text)
+        
+        # Hapus baris kosong berlebihan
         text = re.sub(r'\n\s*\n', '\n\n', text)
+        
         return text.strip()
     
     def count_tokens(self, text):
@@ -932,12 +887,17 @@ class ImprovedWordCloudGenerator:
     
     def preprocess_text(self, text):
         """Preprocessing text untuk word cloud"""
+        # Convert to lowercase
         text = text.lower()
+        
+        # Remove punctuation and numbers
         text = re.sub(r'[^\w\s]', ' ', text)
         text = re.sub(r'\d+', '', text)
         
+        # Split into words
         words = text.split()
         
+        # Filter stopwords dan kata pendek
         filtered_words = [
             word for word in words 
             if len(word) > 2 and word not in self.stopwords
@@ -950,23 +910,25 @@ class ImprovedWordCloudGenerator:
         if not text.strip():
             return None
         
+        # Preprocess text
         processed_text = self.preprocess_text(text)
         
         if not processed_text.strip():
             return None
         
+        # Generate word cloud
         wordcloud = WordCloud(
             width=width,
             height=height,
             background_color='white',
             max_words=max_words,
             colormap='viridis',
-            font_path=None,
+            font_path=None,  # Gunakan font default
             relative_scaling=0.5,
             min_font_size=10,
             max_font_size=100,
             prefer_horizontal=0.7,
-            collocations=False
+            collocations=False  # Hindari kata berulang
         ).generate(processed_text)
         
         return wordcloud
@@ -978,6 +940,7 @@ class ImprovedWordCloudGenerator:
         ax.axis('off')
         ax.set_title(title, fontsize=16, fontweight='bold', pad=20)
         
+        # Tight layout untuk menghindari clipping
         plt.tight_layout()
         
         return fig
@@ -1009,9 +972,11 @@ class ChatLogger:
             "tokens_used": tokens_used
         }
         
+        # Baca log yang ada
         logs = self.load_logs()
         logs.append(log_entry)
         
+        # Simpan ke file
         with open(self.log_file, 'w', encoding='utf-8') as f:
             json.dump(logs, f, ensure_ascii=False, indent=2)
     
@@ -1031,7 +996,8 @@ class GeminiChatbot:
         self.model = genai.GenerativeModel('gemini-2.0-flash-exp')
         
     def is_document_related(self, message):
-        """Menentukan apakah pertanyaan terkait dengan dokumen"""
+        """Menentukan apakah pertanyaan terkait dengan dokumen dengan logika yang lebih ketat"""
+        # Kata kunci yang SANGAT spesifik untuk dokumen/statistik
         strong_document_keywords = [
             'dokumen', 'laporan', 'pdf', 'file', 'publikasi', 'tabel', 'grafik', 'excel', 'csv',
             'berdasarkan dokumen', 'dalam laporan', 'dari file', 'dari publikasi',
@@ -1040,6 +1006,7 @@ class GeminiChatbot:
             'pdrb', 'inflasi', 'indeks', 'persentase penduduk', 'sheet', 'worksheet'
         ]
         
+        # Kata kunci yang menunjukkan pertanyaan umum (bukan dokumen)
         general_keywords = [
             'halo', 'hai', 'hello', 'selamat', 'terima kasih', 'thanks',
             'bagaimana kabar', 'apa kabar', 'siapa kamu', 'nama kamu',
@@ -1050,30 +1017,36 @@ class GeminiChatbot:
         
         message_lower = message.lower()
         
+        # Cek kata kunci umum dulu
         general_score = sum(1 for keyword in general_keywords if keyword in message_lower)
         if general_score >= 1 and len(message.split()) <= 10:
             return False
         
+        # Cek kata kunci dokumen yang kuat
         strong_document_score = sum(2 for keyword in strong_document_keywords if keyword in message_lower)
         
+        # Cek apakah ada angka/tahun yang menunjukkan pencarian data spesifik
         year_pattern = r'\b(19|20)\d{2}\b'
         number_pattern = r'\b\d+\b'
         has_year = bool(re.search(year_pattern, message))
         has_numbers = len(re.findall(number_pattern, message)) > 0
         
+        # Cek konten dokumen relevan hanya jika ada indikasi kuat
         if strong_document_score >= 2 or has_year or (has_numbers and len(message.split()) > 5):
             relevant_content = self.document_processor.search_relevant_content(message)
             content_score = 3 if len(relevant_content.strip()) > 200 else 0
         else:
             content_score = 0
         
+        # Scoring yang lebih ketat
         total_score = strong_document_score + content_score + (1 if has_year else 0)
         
         return total_score >= 3
     
     def generate_response(self, user_message):
-        """Menghasilkan respons dari Gemini"""
+        """Menghasilkan respons dari Gemini dengan handling yang lebih baik"""
         
+        # Handle greeting terlebih dahulu
         if self.is_greeting(user_message):
             greeting_responses = [
                 "Halo! Saya adalah Asisten Virtual BPS Provinsi Lampung. Saya siap membantu Anda dengan informasi statistik dan pertanyaan lainnya. Ada yang bisa saya bantu?",
@@ -1082,6 +1055,7 @@ class GeminiChatbot:
             ]
             return random.choice(greeting_responses), False, 0
         
+        # Handle thanks
         if self.is_thanks(user_message):
             thanks_responses = [
                 "Sama-sama! Senang bisa membantu. Jangan ragu untuk bertanya lagi jika ada yang ingin Anda ketahui.",
@@ -1093,6 +1067,7 @@ class GeminiChatbot:
         is_document_related = self.is_document_related(user_message)
         
         if is_document_related:
+            # Jika terkait dokumen, gunakan konten dokumen sebagai konteks
             document_content = self.document_processor.search_relevant_content(user_message)
             tokens_used = self.document_processor.count_tokens(document_content)
             
@@ -1129,7 +1104,7 @@ class GeminiChatbot:
             INSTRUKSI:
             1. Jawab pertanyaan dengan ramah, informatif, dan komprehensif menggunakan pengetahuan umum Anda
             2. Jika pertanyaan bersifat sapaan, balas dengan sapaan yang hangat
-            3. Jika pertanyaan tentang definisi, konsep, atau penjelasan umum, berikan penjelasan yang mendalam dan jelas  
+            3. Jika pertanyaan tentang definisi, konsep, atau penjelasan umum, berikan penjelasan yang mendalam dan jelas
             4. Jika pertanyaan teknis non-statistik, berikan jawaban yang komprehensif dengan contoh jika diperlukan
             5. Jika pertanyaan tentang sains, teknologi, sejarah, budaya, atau topik lainnya, gunakan pengetahuan Anda untuk memberikan jawaban yang akurat dan detail
             6. Gunakan bahasa Indonesia yang natural dan mudah dipahami
@@ -1191,11 +1166,11 @@ def show_initial_greeting():
         st.session_state.greeting_shown = True
 
 def init_session_state():
-    """Inisialisasi session state dengan persistent cache"""
+    """Inisialisasi session state"""
     if 'messages' not in st.session_state:
         st.session_state.messages = []
     if 'document_processor' not in st.session_state:
-        st.session_state.document_processor = PersistentDocumentProcessor(DOCUMENTS_FOLDER_PATH)
+        st.session_state.document_processor = ImprovedDocumentProcessor(DOCUMENTS_FOLDER_PATH)
     if 'chatbot' not in st.session_state:
         st.session_state.chatbot = GeminiChatbot(st.session_state.document_processor)
     if 'chat_logger' not in st.session_state:
@@ -1209,92 +1184,13 @@ def init_session_state():
     if 'greeting_shown' not in st.session_state:
         st.session_state.greeting_shown = False
 
-def enhanced_persistent_cache_management():
-    """Enhanced cache management dengan persistent storage"""
-    st.header("💾 Persistent Cache Management")
-    
-    db_exists = os.path.exists(SQLITE_CACHE_DB)
-    cache_info = st.session_state.document_processor.get_cache_info()
-    
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.metric("Database Status", "✅ Aktif" if db_exists else "❌ Tidak Ada")
-    
-    with col2:
-        if db_exists:
-            db_size = os.path.getsize(SQLITE_CACHE_DB) / (1024 * 1024)
-            st.metric("Database Size", f"{db_size:.2f} MB")
-        else:
-            st.metric("Database Size", "0 MB")
-    
-    with col3:
-        st.metric("Cached Documents", cache_info['total_documents'])
-    
-    with col4:
-        st.metric("Total Chunks", cache_info['total_chunks'])
-    
-    st.subheader("🗄️ Database Operations")
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        if st.button("🔄 Refresh Cache"):
-            st.session_state.document_processor.refresh_cache_persistent()
-            st.rerun()
-    
-    with col2:
-        if st.button("🗑️ Clear Database"):
-            st.session_state.document_processor.sqlite_cache.clear_all_cache()
-            st.success("Database cleared")
-            st.rerun()
-    
-    with col3:
-        if st.button("📊 Database Info"):
-            if db_exists:
-                try:
-                    stats = st.session_state.document_processor.sqlite_cache.get_cache_stats()
-                    
-                    st.write(f"**Total Documents in DB:** {stats['total_documents']}")
-                    st.write(f"**Total Size:** {stats['total_size']:,} characters")
-                    
-                    if stats['file_types']:
-                        st.write("**File Types:**")
-                        for ext, count in stats['file_types'].items():
-                            st.write(f"  • {ext}: {count} file(s)")
-                
-                except Exception as e:
-                    st.error(f"Database error: {str(e)}")
-            else:
-                st.info("Database tidak ditemukan")
-    
-    cached_files = st.session_state.document_processor.sqlite_cache.get_all_cached_files()
-    
-    if cached_files:
-        st.subheader("📁 Cached Files Management")
-        
-        for filename, info in cached_files.items():
-            with st.expander(f"📄 {filename}"):
-                col1, col2 = st.columns([3, 1])
-                
-                with col1:
-                    st.write(f"**Hash:** {info['file_hash'][:16]}...")
-                    st.write(f"**Processed:** {info['processed_at']}")
-                    st.write(f"**Size:** {info.get('file_size', 'N/A'):,} characters")
-                
-                with col2:
-                    if st.button(f"🗑️ Remove", key=f"remove_db_{filename}"):
-                        success = st.session_state.document_processor.sqlite_cache.remove_document_cache(filename)
-                        if success:
-                            st.success(f"Removed {filename}")
-                            st.rerun()
-
 def enhanced_admin_cache_management():
     """Enhanced cache management interface untuk admin"""
     st.header("💾 Enhanced Cache Management")
     
     cache_info = st.session_state.document_processor.get_cache_info()
     
+    # Overview metrics
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
@@ -1313,14 +1209,18 @@ def enhanced_admin_cache_management():
     if cache_info['cached_at']:
         st.info(f"📅 Cache terakhir diperbarui: {cache_info['cached_at']}")
     
+    # File management section
     st.subheader("📁 File Management")
     
     if cache_info['cached_files']:
+        # Create tabs for different views
         tab1, tab2, tab3 = st.tabs(["📋 File List", "➕ Add Files", "🔄 Bulk Operations"])
         
         with tab1:
+            # Detailed file list
             st.write("**File yang tersimpan dalam cache:**")
             
+            # Get current files from folder
             current_files = st.session_state.document_processor.get_all_document_files()
             
             for i, filename in enumerate(cache_info['cached_files']):
@@ -1328,16 +1228,18 @@ def enhanced_admin_cache_management():
                     col1, col2, col3 = st.columns([2, 1, 1])
                     
                     with col1:
+                        # File info
                         if filename in current_files:
                             file_path = current_files[filename]['path']
                             try:
                                 file_stat = os.stat(file_path)
-                                file_size = file_stat.st_size / 1024
+                                file_size = file_stat.st_size / 1024  # KB
                                 modified_time = datetime.fromtimestamp(file_stat.st_mtime)
                                 
                                 st.write(f"📊 Ukuran: {file_size:.1f} KB")
                                 st.write(f"📅 Dimodifikasi: {modified_time.strftime('%Y-%m-%d %H:%M')}")
                                 
+                                # Show chunk info
                                 if filename in st.session_state.document_processor.document_chunks:
                                     chunk_count = len(st.session_state.document_processor.document_chunks[filename])
                                     st.write(f"📄 Chunks: {chunk_count}")
@@ -1348,13 +1250,16 @@ def enhanced_admin_cache_management():
                             st.write("⚠️ File tidak ditemukan di folder")
                     
                     with col2:
+                        # Refresh single file
                         if st.button(f"🔄 Refresh", key=f"refresh_{i}"):
                             if filename in current_files:
                                 file_info = current_files[filename]
-                                success = st.session_state.document_processor.process_single_document_persistent(
-                                    filename, file_info['path'], file_info['hash']
+                                success = st.session_state.document_processor.process_single_document(
+                                    filename, file_info['path']
                                 )
                                 if success:
+                                    st.session_state.document_processor.document_hashes[filename] = file_info['hash']
+                                    st.session_state.document_processor.save_cache()
                                     st.success(f"✅ {filename} berhasil di-refresh")
                                     st.rerun()
                                 else:
@@ -1363,11 +1268,13 @@ def enhanced_admin_cache_management():
                                 st.error("File tidak ditemukan")
                     
                     with col3:
+                        # Remove from cache
                         if st.button(f"🗑️ Remove", key=f"remove_{i}"):
                             st.session_state.document_processor.remove_document_from_cache(filename)
                             st.rerun()
         
         with tab2:
+            # Add new files section
             st.write("**Tambah file baru ke cache:**")
             
             current_files = st.session_state.document_processor.get_all_document_files()
@@ -1377,10 +1284,11 @@ def enhanced_admin_cache_management():
             if uncached_files:
                 st.write(f"Ditemukan {len(uncached_files)} file yang belum di-cache:")
                 
+                # Select files to add
                 files_to_add = st.multiselect(
                     "Pilih file yang ingin ditambahkan:",
                     list(uncached_files.keys()),
-                    default=list(uncached_files.keys())
+                    default=list(uncached_files.keys())  # Select all by default
                 )
                 
                 if st.button("➕ Tambah File Terpilih", disabled=not files_to_add):
@@ -1392,16 +1300,21 @@ def enhanced_admin_cache_management():
                         status_text.text(f"Memproses {filename}...")
                         
                         file_info = uncached_files[filename]
-                        success = st.session_state.document_processor.process_single_document_persistent(
-                            filename, file_info['path'], file_info['hash']
+                        success = st.session_state.document_processor.process_single_document(
+                            filename, file_info['path']
                         )
                         
                         if success:
+                            st.session_state.document_processor.document_hashes[filename] = file_info['hash']
                             success_count += 1
                         
                         progress_bar.progress((i + 1) / len(files_to_add))
                     
-                    st.success(f"✅ Berhasil menambahkan {success_count}/{len(files_to_add)} file")
+                    # Save cache
+                    if st.session_state.document_processor.save_cache():
+                        st.success(f"✅ Berhasil menambahkan {success_count}/{len(files_to_add)} file")
+                    else:
+                        st.error("❌ Gagal menyimpan cache")
                     
                     status_text.empty()
                     progress_bar.empty()
@@ -1410,38 +1323,42 @@ def enhanced_admin_cache_management():
                 st.info("✅ Semua file dalam folder sudah ter-cache")
         
         with tab3:
+            # Bulk operations
             st.write("**Operasi Bulk:**")
             
             col1, col2 = st.columns(2)
             
             with col1:
-                if st.button("🔄 Refresh Semua Cache"):
-                    st.session_state.document_processor.load_or_cache_documents_persistent()
+                if st.button("🔄 Refresh Semua Cache", help="Periksa dan update semua file yang berubah"):
+                    st.session_state.document_processor.load_or_cache_documents()
                     st.rerun()
                 
-                if st.button("🗑️ Hapus Semua Cache"):
-                    st.session_state.document_processor.refresh_cache_persistent()
+                if st.button("🗑️ Hapus Semua Cache", help="Hapus semua cache dan mulai dari awal"):
+                    st.session_state.document_processor.refresh_cache()
                     st.rerun()
             
             with col2:
-                if st.button("📊 Analisis Folder"):
+                if st.button("📊 Analisis Folder", help="Analisis perbedaan antara folder dan cache"):
                     current_files = st.session_state.document_processor.get_all_document_files()
                     cached_files = set(cache_info['cached_files'])
                     
                     st.write("**Analisis Folder vs Cache:**")
                     
+                    # Files in folder but not cached
                     uncached = set(current_files.keys()) - cached_files
                     if uncached:
                         st.write(f"📁➡️💾 File di folder tapi belum di-cache: {len(uncached)}")
                         for f in uncached:
                             st.write(f"  • {f}")
                     
+                    # Files cached but not in folder
                     missing = cached_files - set(current_files.keys())
                     if missing:
                         st.write(f"💾➡️❌ File di cache tapi tidak ada di folder: {len(missing)}")
                         for f in missing:
                             st.write(f"  • {f}")
                     
+                    # Files that might need update
                     needs_update = []
                     for filename, file_info in current_files.items():
                         if filename in cached_files:
@@ -1459,10 +1376,15 @@ def enhanced_admin_cache_management():
     else:
         st.info("Tidak ada file dalam cache. Silakan tambahkan dokumen ke folder dan refresh.")
     
+    # Cache statistics
     st.subheader("📊 Cache Statistics")
     
     if cache_info['total_documents'] > 0:
-        file_types = cache_info.get('file_types', {})
+        # File type distribution
+        file_types = {}
+        for filename in cache_info['cached_files']:
+            ext = os.path.splitext(filename)[1].lower()
+            file_types[ext] = file_types.get(ext, 0) + 1
         
         if file_types:
             col1, col2 = st.columns(2)
@@ -1473,8 +1395,9 @@ def enhanced_admin_cache_management():
                     st.write(f"  • {ext}: {count} file(s)")
             
             with col2:
+                # Memory usage per file
                 st.write("**Penggunaan Memori per File:**")
-                for filename in cache_info['cached_files'][:5]:
+                for filename in cache_info['cached_files'][:5]:  # Show top 5
                     if filename in st.session_state.document_processor.document_contents:
                         content_size = len(st.session_state.document_processor.document_contents[filename])
                         st.write(f"  • {filename}: {content_size/1024:.1f} KB")
@@ -1484,22 +1407,28 @@ def user_interface_alternative():
     st.title("🤖 Chatbot BPS Provinsi Lampung")
     st.markdown("Tanyakan apapun tentang data di Provinsi Lampung atau pertanyaan umum lainnya!")
     
+    # Tampilkan greeting otomatis
     show_initial_greeting()
     
+    # Hitung token sesi saat ini
     session_tokens = TokenCounter.get_session_tokens(st.session_state.messages)
     
+    # Display token usage di sidebar
     st.sidebar.markdown("---")
     st.sidebar.markdown("📊 **Penggunaan Token**")
     
+    # Progress bar untuk session tokens
     session_progress = min(session_tokens / MAX_SESSION_TOKENS, 1.0)
     st.sidebar.progress(session_progress)
     st.sidebar.write(f"Sesi: {session_tokens:,} / {MAX_SESSION_TOKENS:,} token")
     
+    # Warning jika mendekati batas
     if session_tokens > MAX_SESSION_TOKENS * 0.8:
         st.sidebar.warning("⚠️ Sesi mendekati batas token. Pesan lama akan dihapus otomatis.")
     elif session_tokens > MAX_SESSION_TOKENS * 0.6:
         st.sidebar.info("ℹ️ Sesi telah menggunakan 60% dari batas token.")
     
+    # Tambahkan contoh pertanyaan
     with st.expander("💡 Contoh Pertanyaan"):
         st.markdown("""
         **Pertanyaan tentang Data Statistik:**
@@ -1514,8 +1443,10 @@ def user_interface_alternative():
         - Apa fungsi statistik dalam pembangunan?
         """)
     
+    # Container untuk chat history
     chat_container = st.container()
     
+    # Tampilkan chat history
     with chat_container:
         for message in st.session_state.messages:
             if message["role"] == "user":
@@ -1525,6 +1456,7 @@ def user_interface_alternative():
                 with st.chat_message("assistant"):
                     st.write(message["content"])
     
+    # Tampilkan loading jika sedang processing
     if st.session_state.input_disabled:
         with st.spinner("🤖 Asisten sedang memproses pertanyaan Anda..."):
             user_input = st.session_state.current_user_input
@@ -1532,22 +1464,27 @@ def user_interface_alternative():
             try:
                 response, is_document_related, tokens_used = st.session_state.chatbot.generate_response(user_input)
                 
+                # Tambahkan respons bot
                 st.session_state.messages.append({"role": "assistant", "content": response})
                 
+                # Log percakapan
                 st.session_state.chat_logger.log_conversation(user_input, response, is_document_related, tokens_used)
                 
             except Exception as e:
                 st.error(f"Terjadi kesalahan: {str(e)}")
             
             finally:
+                # Reset processing state
                 st.session_state.input_disabled = False
                 if hasattr(st.session_state, 'current_user_input'):
                     delattr(st.session_state, 'current_user_input')
                 st.rerun()
     
+    # Tampilkan input form hanya jika TIDAK sedang processing
     if not st.session_state.input_disabled:
         input_form()
     
+    # Tampilkan statistik penggunaan
     if st.session_state.messages:
         st.sidebar.markdown("---")
         st.sidebar.markdown("📊 **Statistik Sesi**")
@@ -1565,8 +1502,10 @@ def input_form():
             key="user_input_field"
         )
         
+        # Hitung token dari input
         input_tokens = TokenCounter.count_tokens(user_input) if user_input else 0
         
+        # Tampilkan jumlah token input
         if user_input:
             if input_tokens > MAX_USER_MESSAGE_TOKENS:
                 st.error(f"❌ Pesan terlalu panjang! ({input_tokens:,} token, maksimal {MAX_USER_MESSAGE_TOKENS:,} token)")
@@ -1588,13 +1527,16 @@ def input_form():
                 use_container_width=True
             )
         
+        # Handle form submission
         if clear_chat:
             st.session_state.messages = []
             st.rerun()
         
         if submitted and user_input and input_tokens <= MAX_USER_MESSAGE_TOKENS:
+            # Tambahkan pesan pengguna
             st.session_state.messages.append({"role": "user", "content": user_input})
             
+            # Trim pesan jika melebihi batas sesi
             updated_session_tokens = TokenCounter.get_session_tokens(st.session_state.messages)
             if updated_session_tokens > MAX_SESSION_TOKENS:
                 st.session_state.messages = TokenCounter.trim_session_to_limit(
@@ -1602,6 +1544,7 @@ def input_form():
                 )
                 st.info("ℹ️ Beberapa pesan lama telah dihapus untuk menghemat token.")
             
+            # Set processing state
             st.session_state.input_disabled = True
             st.session_state.current_user_input = user_input
             st.rerun()
@@ -1616,6 +1559,7 @@ def admin_login():
         submit = st.form_submit_button("Login")
         
         if submit:
+            # Ganti dengan credentials yang sesuai
             if username == "admin" and password == "admin123":
                 st.session_state.admin_authenticated = True
                 st.success("Login berhasil!")
@@ -1623,21 +1567,25 @@ def admin_login():
             else:
                 st.error("Username atau password salah!")
     
+    # Tambahan info untuk user
     st.info("💡 Silakan login untuk mengakses dashboard admin")
 
 def admin_interface():
     """Interface untuk admin dengan analytics dan word cloud"""
     st.title("🔧 Admin Dashboard - BPS Chatbot Analytics")
     
+    # Load chat logs
     logs = st.session_state.chat_logger.load_logs()
     
     if not logs:
         st.warning("Belum ada data chat untuk dianalisis.")
         return
     
+    # Sidebar untuk filter
     with st.sidebar:
         st.header("Filter Data")
         
+        # Filter berdasarkan tanggal
         dates = [datetime.fromisoformat(log['timestamp']).date() for log in logs]
         if dates:
             min_date = min(dates)
@@ -1646,6 +1594,7 @@ def admin_interface():
             start_date = st.date_input("Dari tanggal:", min_date)
             end_date = st.date_input("Sampai tanggal:", max_date)
             
+            # Filter logs berdasarkan tanggal
             filtered_logs = [
                 log for log in logs 
                 if start_date <= datetime.fromisoformat(log['timestamp']).date() <= end_date
@@ -1653,6 +1602,7 @@ def admin_interface():
         else:
             filtered_logs = logs
         
+        # Filter berdasarkan jenis pertanyaan
         question_types = st.multiselect(
             "Jenis Pertanyaan:",
             ["Document Related", "General"],
@@ -1666,12 +1616,11 @@ def admin_interface():
                    (not log['is_document_related'] and "General" in question_types)
             ]
     
-    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
-        "📊 Overview", "☁️ Word Cloud", "📈 Analytics", 
-        "💬 Chat History", "💾 Cache Management", "🗄️ Persistent Cache"
-    ])
+    # Tabs untuk berbagai analisis
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["📊 Overview", "☁️ Word Cloud", "📈 Analytics", "💬 Chat History", "💾 Cache Management"])
     
     with tab1:
+        # Overview metrics
         col1, col2, col3, col4 = st.columns(4)
         
         with col1:
@@ -1689,6 +1638,7 @@ def admin_interface():
             avg_response_length = sum(log['response_length'] for log in filtered_logs) / len(filtered_logs) if filtered_logs else 0
             st.metric("Avg Response Length", f"{avg_response_length:.0f} chars")
         
+        # Chart distribusi per hari
         if filtered_logs:
             df_daily = pd.DataFrame(filtered_logs)
             df_daily['date'] = pd.to_datetime(df_daily['timestamp']).dt.date
@@ -1705,11 +1655,14 @@ def admin_interface():
             st.plotly_chart(fig, use_container_width=True)
     
     with tab2:
+        # Word Cloud Analysis
         st.header("☁️ Word Cloud Analysis")
         
         if filtered_logs:
+            # Gabungkan semua user messages
             all_user_messages = " ".join([log['user_message'] for log in filtered_logs])
             
+            # Pilihan untuk word cloud
             col1, col2 = st.columns(2)
             
             with col1:
@@ -1721,6 +1674,7 @@ def admin_interface():
                     ["Semua Pertanyaan", "Document Related", "General Questions"]
                 )
             
+            # Filter berdasarkan jenis
             if wordcloud_type == "Document Related":
                 messages = [log['user_message'] for log in filtered_logs if log['is_document_related']]
             elif wordcloud_type == "General Questions":
@@ -1731,6 +1685,7 @@ def admin_interface():
             if messages:
                 combined_text = " ".join(messages)
                 
+                # Generate word cloud
                 wordcloud = st.session_state.wordcloud_generator.generate_wordcloud(
                     combined_text, 
                     max_words=max_words,
@@ -1739,16 +1694,19 @@ def admin_interface():
                 )
                 
                 if wordcloud:
+                    # Plot word cloud
                     fig = st.session_state.wordcloud_generator.plot_wordcloud(
                         wordcloud, 
                         title=f"Word Cloud - {wordcloud_type}"
                     )
                     st.pyplot(fig)
                     
+                    # Tampilkan frekuensi kata
                     st.subheader("📊 Frekuensi Kata Teratas")
                     word_freq = st.session_state.wordcloud_generator.get_word_frequencies(combined_text, top_n=20)
                     
                     if word_freq:
+                        # Buat chart frekuensi
                         freq_df = pd.DataFrame(list(word_freq.items()), columns=['Kata', 'Frekuensi'])
                         fig_freq = px.bar(
                             freq_df, 
@@ -1761,6 +1719,7 @@ def admin_interface():
                         fig_freq.update_layout(yaxis={'categoryorder': 'total ascending'})
                         st.plotly_chart(fig_freq, use_container_width=True)
                         
+                        # Tabel frekuensi
                         st.dataframe(freq_df, use_container_width=True)
                 else:
                     st.warning("Tidak dapat membuat word cloud. Mungkin tidak ada kata yang cukup bermakna.")
@@ -1770,9 +1729,11 @@ def admin_interface():
             st.warning("Tidak ada data chat untuk membuat word cloud.")
     
     with tab3:
+        # Advanced Analytics
         st.header("📈 Advanced Analytics")
         
         if filtered_logs:
+            # Analisis panjang pesan
             st.subheader("Analisis Panjang Pesan")
             
             df_analysis = pd.DataFrame(filtered_logs)
@@ -1780,6 +1741,7 @@ def admin_interface():
             col1, col2 = st.columns(2)
             
             with col1:
+                # Histogram panjang user message
                 fig_hist = px.histogram(
                     df_analysis, 
                     x='message_length',
@@ -1789,6 +1751,7 @@ def admin_interface():
                 st.plotly_chart(fig_hist, use_container_width=True)
             
             with col2:
+                # Histogram panjang response
                 fig_hist_resp = px.histogram(
                     df_analysis, 
                     x='response_length',
@@ -1797,6 +1760,7 @@ def admin_interface():
                 )
                 st.plotly_chart(fig_hist_resp, use_container_width=True)
             
+            # Korelasi panjang pertanyaan vs respons
             st.subheader("Korelasi Panjang Pertanyaan vs Respons")
             fig_scatter = px.scatter(
                 df_analysis,
@@ -1809,9 +1773,11 @@ def admin_interface():
             st.plotly_chart(fig_scatter, use_container_width=True)
     
     with tab4:
+        # Chat History
         st.header("💬 Chat History")
         
         if filtered_logs:
+            # Pagination
             items_per_page = st.selectbox("Items per page:", [10, 25, 50, 100], index=1)
             total_pages = (len(filtered_logs) + items_per_page - 1) // items_per_page
             
@@ -1823,6 +1789,7 @@ def admin_interface():
             else:
                 page_logs = filtered_logs
             
+            # Tampilkan chat history
             for i, log in enumerate(page_logs, 1):
                 with st.expander(f"Chat {start_idx + i if 'start_idx' in locals() else i} - {log['timestamp'][:19]}"):
                     st.write("**User:**", log['user_message'])
@@ -1833,15 +1800,14 @@ def admin_interface():
             st.info("Tidak ada chat history untuk ditampilkan.")
     
     with tab5:
+        # Enhanced cache management
         enhanced_admin_cache_management()
-    
-    with tab6:
-        enhanced_persistent_cache_management()
 
 def main():
     """Fungsi utama aplikasi"""
     init_session_state()
     
+    # Sidebar untuk navigasi
     col1, col2, col3 = st.sidebar.columns([1, 2, 1])
     with col2:
         st.image("assets/logo_bps.png", width=100)
@@ -1850,6 +1816,8 @@ def main():
     
     page = st.sidebar.selectbox("Pilih Halaman:", ["👤 User Chat", "👨‍💼 Admin Dashboard"])
     
+    
+    # Routing halaman
     if page == "👤 User Chat":
         user_interface_alternative()
     else:
@@ -1865,5 +1833,246 @@ def main():
             
             admin_interface()
 
+# Additional utility functions for better performance and user experience
+
+def clear_cache_files():
+    """Utility function to clear all cache files"""
+    try:
+        files_to_remove = [DOCUMENTS_CACHE_FILE, DOCUMENTS_HASH_FILE]
+        removed_count = 0
+        
+        for file_path in files_to_remove:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                removed_count += 1
+        
+        return removed_count > 0
+    except Exception as e:
+        st.error(f"Error clearing cache files: {str(e)}")
+        return False
+
+def get_system_info():
+    """Get system information for debugging"""
+    import platform
+    try:
+        import psutil
+        
+        info = {
+            'platform': platform.system(),
+            'python_version': platform.python_version(),
+            'memory_usage': psutil.virtual_memory().percent,
+            'disk_usage': psutil.disk_usage('.').percent,
+            'cache_files_exist': {
+                'documents_cache': os.path.exists(DOCUMENTS_CACHE_FILE),
+                'documents_hash': os.path.exists(DOCUMENTS_HASH_FILE),
+                'chat_logs': os.path.exists(CHAT_LOG_FILE)
+            }
+        }
+    except ImportError:
+        info = {
+            'platform': platform.system(),
+            'python_version': platform.python_version(),
+            'memory_usage': 'N/A (psutil not available)',
+            'disk_usage': 'N/A (psutil not available)',
+            'cache_files_exist': {
+                'documents_cache': os.path.exists(DOCUMENTS_CACHE_FILE),
+                'documents_hash': os.path.exists(DOCUMENTS_HASH_FILE),
+                'chat_logs': os.path.exists(CHAT_LOG_FILE)
+            }
+        }
+    
+    return info
+
+def export_chat_logs_to_csv():
+    """Export chat logs to CSV for analysis"""
+    try:
+        logger = ChatLogger(CHAT_LOG_FILE)
+        logs = logger.load_logs()
+        
+        if not logs:
+            return None
+        
+        # Convert to DataFrame
+        df = pd.DataFrame(logs)
+        
+        # Add derived columns
+        df['timestamp'] = pd.to_datetime(df['timestamp'])
+        df['date'] = df['timestamp'].dt.date
+        df['hour'] = df['timestamp'].dt.hour
+        df['day_of_week'] = df['timestamp'].dt.day_name()
+        
+        # Save to CSV
+        csv_filename = f"chat_logs_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        df.to_csv(csv_filename, index=False, encoding='utf-8')
+        
+        return csv_filename
+    except Exception as e:
+        st.error(f"Error exporting logs: {str(e)}")
+        return None
+
+def backup_cache():
+    """Create backup of current cache"""
+    try:
+        import shutil
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        
+        backup_files = []
+        
+        if os.path.exists(DOCUMENTS_CACHE_FILE):
+            backup_cache_file = f"backup_documents_cache_{timestamp}.pkl"
+            shutil.copy2(DOCUMENTS_CACHE_FILE, backup_cache_file)
+            backup_files.append(backup_cache_file)
+        
+        if os.path.exists(DOCUMENTS_HASH_FILE):
+            backup_hash_file = f"backup_documents_hash_{timestamp}.json"
+            shutil.copy2(DOCUMENTS_HASH_FILE, backup_hash_file)
+            backup_files.append(backup_hash_file)
+        
+        return backup_files
+    except Exception as e:
+        st.error(f"Error creating backup: {str(e)}")
+        return []
+
+# Enhanced error handling and logging
+import logging
+
+def setup_logging():
+    """Setup logging for the application"""
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler('chatbot_bps.log', encoding='utf-8'),
+            logging.StreamHandler()
+        ]
+    )
+    
+    return logging.getLogger('ChatbotBPS')
+
+# Performance monitoring
+class PerformanceMonitor:
+    def __init__(self):
+        self.metrics = {
+            'document_load_time': 0,
+            'response_generation_time': 0,
+            'cache_operations': 0,
+            'total_queries': 0
+        }
+    
+    def log_metric(self, metric_name, value):
+        """Log performance metric"""
+        if metric_name in self.metrics:
+            self.metrics[metric_name] += value
+    
+    def get_metrics(self):
+        """Get current metrics"""
+        return self.metrics.copy()
+    
+    def reset_metrics(self):
+        """Reset all metrics"""
+        for key in self.metrics:
+            self.metrics[key] = 0
+
+# Configuration management
+class ConfigManager:
+    def __init__(self):
+        self.config_file = "chatbot_config.json"
+        self.default_config = {
+            "max_user_message_tokens": 1500,
+            "max_session_tokens": 10000,
+            "chunk_size": 1000,
+            "max_context_length": 30000,
+            "documents_folder_path": r"files",
+            "gemini_model": "gemini-2.0-flash-exp",
+            "admin_credentials": {
+                "username": "admin",
+                "password": "admin123"
+            }
+        }
+        self.load_config()
+    
+    def load_config(self):
+        """Load configuration from file or create default"""
+        try:
+            if os.path.exists(self.config_file):
+                with open(self.config_file, 'r', encoding='utf-8') as f:
+                    self.config = json.load(f)
+            else:
+                self.config = self.default_config.copy()
+                self.save_config()
+        except Exception as e:
+            st.error(f"Error loading config: {str(e)}")
+            self.config = self.default_config.copy()
+    
+    def save_config(self):
+        """Save current configuration to file"""
+        try:
+            with open(self.config_file, 'w', encoding='utf-8') as f:
+                json.dump(self.config, f, indent=2, ensure_ascii=False)
+        except Exception as e:
+            st.error(f"Error saving config: {str(e)}")
+    
+    def get(self, key, default=None):
+        """Get configuration value"""
+        return self.config.get(key, default)
+    
+    def set(self, key, value):
+        """Set configuration value"""
+        self.config[key] = value
+        self.save_config()
+
+# Health check function
+def health_check():
+    """Perform system health check"""
+    health_status = {
+        'status': 'healthy',
+        'issues': [],
+        'warnings': []
+    }
+    
+    # Check if documents folder exists
+    if not os.path.exists(DOCUMENTS_FOLDER_PATH):
+        health_status['issues'].append(f"Documents folder not found: {DOCUMENTS_FOLDER_PATH}")
+        health_status['status'] = 'unhealthy'
+    
+    # Check cache files
+    if not os.path.exists(DOCUMENTS_CACHE_FILE):
+        health_status['warnings'].append("Document cache file not found")
+    
+    # Check API key
+    if not GEMINI_API_KEY or GEMINI_API_KEY == "YOUR_API_KEY_HERE":
+        health_status['issues'].append("Gemini API key not configured")
+        health_status['status'] = 'unhealthy'
+    
+    # Check memory usage
+    try:
+        import psutil
+        memory_usage = psutil.virtual_memory().percent
+        if memory_usage > 90:
+            health_status['warnings'].append(f"High memory usage: {memory_usage}%")
+        elif memory_usage > 95:
+            health_status['issues'].append(f"Critical memory usage: {memory_usage}%")
+            health_status['status'] = 'unhealthy'
+    except ImportError:
+        health_status['warnings'].append("psutil not available for memory monitoring")
+    
+    return health_status
+
 if __name__ == "__main__":
-    main()
+    # Setup logging
+    logger = setup_logging()
+    logger.info("Starting Chatbot BPS Provinsi Lampung")
+    
+    # Initialize session state components
+    if 'performance_monitor' not in st.session_state:
+        st.session_state.performance_monitor = PerformanceMonitor()
+    
+    if 'config_manager' not in st.session_state:
+        st.session_state.config_manager = ConfigManager()
+    
+    try:
+        main()
+    except Exception as e:
+        logger.error(f"Application error: {str(e)}")
+        st.error(f"Terjadi kesalahan aplikasi: {str(e)}")
+        st.info("Silakan refresh halaman atau hubungi administrator.")
