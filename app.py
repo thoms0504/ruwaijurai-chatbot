@@ -352,12 +352,7 @@ class ImprovedDocumentProcessor:
             if files_from_cache:
                 st.success("Data telah tersimpan")
             
-            if files_removed:
-                st.info(f"🗑️ {len(files_removed)} file lama dihapus dari cache")
-                with st.expander("File yang dihapus"):
-                    for filename in files_removed:
-                        st.write(f"❌ {filename}")
-        
+            
         # Process new/modified files
         if files_to_process:
             st.info(f"🔄 Memproses {len(files_to_process)} dokumen baru/yang dimodifikasi...")
@@ -383,10 +378,6 @@ class ImprovedDocumentProcessor:
             
             # Save updated cache
             
-        
-        elif cache_loaded and files_from_cache:
-            st.success("🚀Model siap digunakan")
-        
         # Summary
         total_docs = len(self.document_contents)
         total_chunks = sum(len(chunks) for chunks in self.document_chunks.values())
