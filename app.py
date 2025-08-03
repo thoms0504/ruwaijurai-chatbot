@@ -438,8 +438,7 @@ class PersistentDocumentProcessor:
                 self.sqlite_cache.remove_document_cache(filename)
                 files_removed.append(filename)
         
-        if files_from_cache:
-            st.success(f"✅ {len(files_from_cache)} dokumen dimuat dari cache persistent")
+        
         
         if files_removed:
             st.info(f"🗑️ {len(files_removed)} file lama dihapus dari cache")
@@ -468,13 +467,12 @@ class PersistentDocumentProcessor:
             st.success("💾 Cache persistent berhasil diperbarui")
         
         elif files_from_cache:
-            st.success("🚀 Model siap digunakan (dari cache persistent)")
+            st.success("🚀 Model siap digunakan")
         
         total_docs = len(self.document_contents)
         total_chunks = sum(len(chunks) for chunks in self.document_chunks.values())
         
-        if total_docs > 0:
-            st.info(f"📊 Total: {total_docs} dokumen, {total_chunks} chunks")
+        
     
     def process_single_document_persistent(self, filename, file_path, file_hash):
         """Memproses satu dokumen dan simpan ke persistent storage"""
