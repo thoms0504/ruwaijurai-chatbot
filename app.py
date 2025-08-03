@@ -27,9 +27,13 @@ from PIL import Image
 import openpyxl
 from openpyxl import load_workbook
 import csv
+import time
 
 # Load icon
-icon = Image.open("assets/logo_bps.png")
+try:
+    icon = Image.open("assets/logo_bps.png")
+except:
+    icon = None
 
 # Konfigurasi halaman
 st.set_page_config(
@@ -39,11 +43,14 @@ st.set_page_config(
 )
 
 # Konfigurasi Gemini API 
-genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+try:
+    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+except:
+    st.error("GEMINI_API_KEY tidak ditemukan dalam secrets. Pastikan API key sudah dikonfigurasi.")
+    st.stop()
 
-# Cache files (updated names)
-DOCUMENTS_CACHE_FILE = "documents_cache.pkl"
-DOCUMENTS_HASH_FILE = "documents_hash.json"
+# PERBAIKAN: Menggunakan st.session_state untuk cache persisten
+CACHE_VERSION = "v2.0"  # Increment ketika struktur cache berubah
 
 # Path ke folder dokumen
 DOCUMENTS_FOLDER_PATH = r"files"
@@ -88,54 +95,13 @@ INDONESIAN_STOPWORDS = {
     'nanti', 'besok', 'kemarin', 'tadi', 'dulu', 'dahulu', 'lampau',
     'mendatang', 'akan', 'bakal', 'segera', 'langsung', 'seketika',
     
-    # Kata penghubung waktu
-    'ketika', 'saat', 'waktu', 'sewaktu', 'tatkala', 'manakala',
-    'selagi', 'sementara', 'sambil', 'seraya', 'sembari',
-    
-    # Kata penghubung sebab akibat
-    'karena', 'sebab', 'lantaran', 'gara', 'akibat', 'dampak',
-    'sehingga', 'makanya', 'jadi', 'maka', 'oleh', 'karenanya',
-    
-    # Kata penghubung tujuan
-    'untuk', 'bagi', 'demi', 'guna', 'agar', 'supaya', 'biar',
-    
-    # Kata penghubung syarat
-    'jika', 'kalau', 'bila', 'bilamana', 'manakala', 'seandainya',
-    'andaikan', 'sekiranya', 'apabila', 'asalkan', 'asal',
-    
-    # Kata penghubung pertentangan
-    'tetapi', 'namun', 'akan', 'tapi', 'sedangkan', 'sementara',
-    'padahal', 'meskipun', 'walaupun', 'sekalipun', 'biarpun',
-    'kendatipun', 'sungguhpun', 'walau', 'biar',
-    
-    # Kata seru
-    'oh', 'ah', 'eh', 'wah', 'aduh', 'astaga', 'ya', 'iya', 'yah',
-    'deh', 'sih', 'kok', 'loh', 'dong', 'kan', 'kah', 'lah',
-    
-    # Kata bilangan
-    'satu', 'dua', 'tiga', 'empat', 'lima', 'enam', 'tujuh', 'delapan',
-    'sembilan', 'sepuluh', 'sebelas', 'dua belas', 'puluh', 'ratus',
-    'ribu', 'juta', 'miliar', 'triliun', 'pertama', 'kedua', 'ketiga',
-    'keempat', 'kelima', 'keenam', 'ketujuh', 'kedelapan', 'kesembilan',
-    'kesepuluh', 'pertama', 'kedua', 'ketiga',
-    
-    # Kata umum lainnya
+    # Kata umum lainnya yang sering muncul
+    'yg', 'dgn', 'utk', 'dg', 'ttg', 'tsb', 'krn', 'pd', 'tdk',
+    'gan', 'min', 'bang', 'bro', 'sis', 'om', 'tante', 'kak', 'dek',
+    'wkwk', 'wkwkwk', 'haha', 'hihi', 'hehe', 'lol', 'wow', 'mantap',
+    'oke', 'ok', 'thanks', 'thank', 'you', 'makasih', 'terima', 'kasih',
     'ada', 'mana', 'jadi', 'begitu', 'seperti', 'ibarat', 'bagai',
     'seolah', 'seakan', 'seumpama', 'umpama', 'misalnya', 'contohnya',
-    'yakni', 'yaitu', 'ialah', 'adalah', 'merupakan', 'berupa',
-    'berwujud', 'berbentuk', 'bertipe', 'berjenis', 'berkategori',
-    'termasuk', 'tergolong', 'tercatat', 'terdapat', 'terdiri',
-    'terbagi', 'terbuat', 'terjadi', 'berlangsung', 'berjalan',
-    'beroperasi', 'berfungsi', 'berperan', 'bertugas', 'berkerja',
-    'berusaha', 'berupaya', 'berusaha', 'mencoba', 'mengupayakan',
-    'mengusahakan', 'melakukan', 'menjalankan', 'menyelenggarakan',
-    'mengadakan', 'menyelesaikan', 'mengatasi', 'menangani',
-    'mengelola', 'mengurus', 'mengatur', 'menyusun', 'menyiapkan',
-    'menyediakan', 'memberikan', 'menyerahkan', 'menyampaikan',
-    'mengirim', 'mengirimkan', 'mengantarkan', 'menghantarkan',
-    'membawa', 'membawakan', 'mengambil', 'mengambilkan',
-    'menerima', 'mendapat', 'mendapatkan', 'memperoleh',
-    'meraih', 'mencapai', 'menggapai', 'menjangkau'
 }
 
 def get_indonesian_stopwords():
@@ -146,12 +112,7 @@ def get_indonesian_stopwords():
         stopwords = factory.get_stop_words()
         
         # Tambahkan stopwords manual jika diperlukan
-        additional_stopwords = {
-            'yg', 'dgn', 'utk', 'dg', 'ttg', 'tsb', 'krn', 'pd', 'tdk', 'tdk',
-            'gan', 'min', 'bang', 'bro', 'sis', 'om', 'tante', 'kak', 'dek',
-            'wkwk', 'wkwkwk', 'haha', 'hihi', 'hehe', 'lol', 'wow', 'mantap',
-            'oke', 'ok', 'thanks', 'thank', 'you', 'makasih', 'terima', 'kasih'
-        }
+        additional_stopwords = INDONESIAN_STOPWORDS
         
         # Gabungkan dengan stopwords tambahan
         all_stopwords = set(stopwords) | additional_stopwords
@@ -202,24 +163,40 @@ class TokenCounter:
         
         return trimmed_messages
 
-class ImprovedDocumentProcessor:
+class PersistentDocumentProcessor:
+    """PERBAIKAN: Document processor dengan persistent cache menggunakan session_state"""
+    
     def __init__(self, documents_folder_path):
         self.documents_folder_path = documents_folder_path
-        self.document_contents = {}
-        self.document_chunks = {}
-        self.document_hashes = {}  # Menyimpan hash per file
         self.chunk_size = 1000
         self.max_context_length = 30000
         
-        # PERBAIKAN: Inisialisasi table_contexts
-        self.table_contexts = {}
+        # PERBAIKAN: Inisialisasi dengan persistent cache
+        self._init_persistent_cache()
         
-        # File cache terpisah
-        self.cache_file = DOCUMENTS_CACHE_FILE
-        self.hash_file = DOCUMENTS_HASH_FILE
-        self.load_or_cache_documents()
+        # Load atau process documents
+        self.load_documents()
+    
+    def _init_persistent_cache(self):
+        """Inisialisasi cache persisten dalam session_state"""
+        cache_key = f"document_cache_{CACHE_VERSION}"
         
+        if cache_key not in st.session_state:
+            st.session_state[cache_key] = {
+                'document_contents': {},
+                'document_chunks': {},
+                'document_hashes': {},
+                'table_contexts': {},
+                'last_check': None,
+                'is_initialized': False
+            }
         
+        # Assign references untuk akses mudah
+        self.cache = st.session_state[cache_key]
+        self.document_contents = self.cache['document_contents']
+        self.document_chunks = self.cache['document_chunks']
+        self.document_hashes = self.cache['document_hashes']
+        self.table_contexts = self.cache['table_contexts']
     
     def get_file_hash(self, file_path):
         """Menghitung hash dari satu file berdasarkan modified time dan size"""
@@ -250,144 +227,114 @@ class ImprovedDocumentProcessor:
         
         return document_files
     
-    def load_existing_cache(self):
-        """Memuat cache yang sudah ada"""
-        try:
-            if os.path.exists(self.cache_file) and os.path.exists(self.hash_file):
-                # Load cached data
-                with open(self.cache_file, 'rb') as f:
-                    cached_data = pickle.load(f)
-                
-                # Load hash data
-                with open(self.hash_file, 'r', encoding='utf-8') as f:
-                    hash_data = json.load(f)
-                
-                self.document_contents = cached_data.get('document_contents', {})
-                self.document_chunks = cached_data.get('document_chunks', {})
-                self.document_hashes = hash_data.get('file_hashes', {})
-                
-                return True
-        except Exception as e:
-            st.warning(f"Gagal memuat cache existing: {str(e)}")
-            # Reset jika cache corrupt
-            self.document_contents = {}
-            self.document_chunks = {}
-            self.document_hashes = {}
+    def load_documents(self):
+        """PERBAIKAN: Load dokumen dengan checking minimal untuk performa optimal"""
         
-        return False
-    
-    def save_cache(self):
-        """Menyimpan cache ke file"""
-        try:
-            # Save document data
-            cache_data = {
-                'document_contents': self.document_contents,
-                'document_chunks': self.document_chunks,
-                'cached_at': datetime.now().isoformat()
-            }
-            
-            with open(self.cache_file, 'wb') as f:
-                pickle.dump(cache_data, f)
-            
-            # Save hash data
-            hash_data = {
-                'file_hashes': self.document_hashes,
-                'cached_at': datetime.now().isoformat()
-            }
-            
-            with open(self.hash_file, 'w', encoding='utf-8') as f:
-                json.dump(hash_data, f, indent=2, ensure_ascii=False)
-                
-            return True
-        except Exception as e:
-            st.error(f"Gagal menyimpan cache: {str(e)}")
-            return False
-    
-    def load_or_cache_documents(self):
-        """Load dokumen dengan incremental caching"""
-        # PERBAIKAN: Reset table_contexts setiap kali load ulang
-        self.table_contexts = {}
-        
-        # Load existing cache
-        cache_loaded = self.load_existing_cache()
+        # Jika sudah diinisialisasi dan tidak perlu check ulang
+        current_time = time.time()
+        if (self.cache['is_initialized'] and 
+            self.cache['last_check'] and 
+            current_time - self.cache['last_check'] < 300):  # Check setiap 5 menit
+            return
         
         # Get current files
         current_files = self.get_all_document_files()
         
         if not current_files:
-            st.warning("Tidak ada file dokumen yang ditemukan")
+            if not self.cache['is_initialized']:
+                st.warning("⚠️ Tidak ada file dokumen yang ditemukan dalam folder")
             return
         
-        # Determine which files need processing
+        # PERBAIKAN: Hanya process file yang baru atau berubah
         files_to_process = []
-        files_from_cache = []
-        files_removed = []
+        files_updated = []
+        files_new = []
         
-        # Check for new or modified files
         for filename, file_info in current_files.items():
             cached_hash = self.document_hashes.get(filename)
             current_hash = file_info['hash']
             
             if cached_hash != current_hash:
+                if cached_hash is None:
+                    files_new.append((filename, file_info))
+                else:
+                    files_updated.append((filename, file_info))
                 files_to_process.append((filename, file_info))
-            elif filename in self.document_contents:
-                files_from_cache.append(filename)
-        
-        # Check for removed files
-        for filename in list(self.document_hashes.keys()):
-            if filename not in current_files:
-                files_removed.append(filename)
         
         # Remove deleted files from cache
-        for filename in files_removed:
-            if filename in self.document_contents:
-                del self.document_contents[filename]
-            if filename in self.document_chunks:
-                del self.document_chunks[filename]
-            if filename in self.document_hashes:
-                del self.document_hashes[filename]
+        files_to_remove = []
+        for filename in list(self.document_hashes.keys()):
+            if filename not in current_files:
+                files_to_remove.append(filename)
         
-        # Display cache status
-        if cache_loaded:
-            if files_from_cache:
-                st.success("Data telah tersimpan")
+        for filename in files_to_remove:
+            self._remove_file_from_cache(filename)
+        
+        # Display status hanya jika ada perubahan atau belum diinisialisasi
+        if not self.cache['is_initialized']:
+            if self.document_contents:
+                st.success(f"✅ Cache ditemukan: {len(self.document_contents)} dokumen")
             
+            if files_to_process:
+                st.info(f"🔄 Memproses {len(files_to_process)} dokumen...")
+                self._process_files(files_to_process)
+        
+        elif files_to_process:
+            # Ada file baru atau berubah
+            status_msg = []
+            if files_new:
+                status_msg.append(f"{len(files_new)} file baru")
+            if files_updated:
+                status_msg.append(f"{len(files_updated)} file diperbarui")
             
-        # Process new/modified files
-        if files_to_process:
-            st.info(f"🔄 Memproses {len(files_to_process)} dokumen baru/yang dimodifikasi...")
-            
-            progress_bar = st.progress(0)
-            status_text = st.empty()
-            
-            for i, (filename, file_info) in enumerate(files_to_process):
-                status_text.text(f"Memproses {filename}...")
-                
-                success = self.process_single_document(filename, file_info['path'])
-                
-                if success:
-                    # Update hash setelah berhasil diproses
-                    self.document_hashes[filename] = file_info['hash']
-                    
-                    
-                
-                progress_bar.progress((i + 1) / len(files_to_process))
-            
-            status_text.empty()
-            progress_bar.empty()
-            
-            # Save updated cache
-            
+            st.info(f"🔄 Memproses {', '.join(status_msg)}...")
+            self._process_files(files_to_process)
+        
+        # Update cache metadata
+        self.cache['last_check'] = current_time
+        self.cache['is_initialized'] = True
+        
         # Summary
-        total_docs = len(self.document_contents)
-        total_chunks = sum(len(chunks) for chunks in self.document_chunks.values())
+        if files_to_process or not self.cache['is_initialized']:
+            total_docs = len(self.document_contents)
+            total_chunks = sum(len(chunks) for chunks in self.document_chunks.values())
+            st.success(f"✅ Siap: {total_docs} dokumen, {total_chunks} chunks")
+    
+    def _process_files(self, files_to_process):
+        """Process multiple files dengan progress bar"""
+        if not files_to_process:
+            return
         
+        progress_bar = st.progress(0)
+        status_text = st.empty()
         
+        for i, (filename, file_info) in enumerate(files_to_process):
+            status_text.text(f"Memproses {filename}...")
+            
+            success = self.process_single_document(filename, file_info['path'])
+            
+            if success:
+                # Update hash setelah berhasil diproses
+                self.document_hashes[filename] = file_info['hash']
+                
+            progress_bar.progress((i + 1) / len(files_to_process))
+        
+        status_text.empty()
+        progress_bar.empty()
+    
+    def _remove_file_from_cache(self, filename):
+        """Menghapus file dari cache"""
+        if filename in self.document_contents:
+            del self.document_contents[filename]
+        if filename in self.document_chunks:
+            del self.document_chunks[filename]
+        if filename in self.document_hashes:
+            del self.document_hashes[filename]
     
     def process_single_document(self, filename, file_path):
         """Memproses satu dokumen"""
         try:
-            # PERBAIKAN: Reset table_contexts untuk setiap dokumen
+            # Reset table_contexts untuk setiap dokumen
             self.table_contexts = {}
             
             text_content = None
@@ -422,63 +369,68 @@ class ImprovedDocumentProcessor:
             return False
     
     def refresh_cache(self):
-        """Refresh cache dengan memuat ulang semua dokumen"""
-        st.info("🔄 Memuat ulang semua dokumen...")
-        
-        # Clear existing data
-        self.document_contents = {}
-        self.document_chunks = {}
-        self.document_hashes = {}
-        # PERBAIKAN: Reset table_contexts juga
-        self.table_contexts = {}
-        
-        # Delete cache files
-        try:
-            if os.path.exists(self.cache_file):
-                os.remove(self.cache_file)
-            if os.path.exists(self.hash_file):
-                os.remove(self.hash_file)
-        except Exception as e:
-            st.warning(f"Gagal menghapus cache lama: {str(e)}")
-        
-        # Reload all documents
-        self.load_or_cache_documents()
+        """PERBAIKAN: Refresh cache dengan konfirmasi"""
+        if st.button("⚠️ Konfirmasi Refresh Cache", type="secondary"):
+            st.info("🔄 Menghapus cache dan memuat ulang semua dokumen...")
+            
+            # Clear cache
+            self.cache['document_contents'].clear()
+            self.cache['document_chunks'].clear()
+            self.cache['document_hashes'].clear()
+            self.cache['table_contexts'].clear()
+            self.cache['is_initialized'] = False
+            self.cache['last_check'] = None
+            
+            # Reload all documents
+            self.load_documents()
+            st.success("✅ Cache berhasil di-refresh!")
+            st.rerun()
     
     def get_cache_info(self):
         """Mendapatkan informasi cache"""
         info = {
-            'cache_exists': os.path.exists(self.cache_file) and os.path.exists(self.hash_file),
+            'cache_exists': self.cache['is_initialized'],
             'cache_size': 0,
-            'cached_at': None,
+            'cached_at': self.cache.get('last_check'),
             'total_documents': len(self.document_contents),
             'total_chunks': sum(len(chunks) for chunks in self.document_chunks.values()),
             'cached_files': list(self.document_hashes.keys())
         }
         
-        if info['cache_exists']:
-            try:
-                info['cache_size'] = os.path.getsize(self.cache_file)
-                
-                with open(self.hash_file, 'r', encoding='utf-8') as f:
-                    hash_data = json.load(f)
-                    info['cached_at'] = hash_data.get('cached_at')
-            except:
-                pass
+        # Estimate cache size
+        try:
+            total_size = 0
+            for content in self.document_contents.values():
+                total_size += len(content.encode('utf-8'))
+            info['cache_size'] = total_size
+        except:
+            pass
         
         return info
     
-    def remove_document_from_cache(self, filename):
-        """Menghapus dokumen tertentu dari cache"""
-        if filename in self.document_contents:
-            del self.document_contents[filename]
-        if filename in self.document_chunks:
-            del self.document_chunks[filename]
-        if filename in self.document_hashes:
-            del self.document_hashes[filename]
+    def force_refresh_single_file(self, filename):
+        """Force refresh satu file tertentu"""
+        current_files = self.get_all_document_files()
         
-        # Save updated cache
-        self.save_cache()
-        st.success(f"Dokumen {filename} berhasil dihapus dari cache")
+        if filename in current_files:
+            file_info = current_files[filename]
+            
+            # Remove from cache first
+            self._remove_file_from_cache(filename)
+            
+            # Process again
+            success = self.process_single_document(filename, file_info['path'])
+            
+            if success:
+                self.document_hashes[filename] = file_info['hash']
+                st.success(f"✅ {filename} berhasil di-refresh")
+                return True
+            else:
+                st.error(f"❌ Gagal refresh {filename}")
+                return False
+        else:
+            st.error(f"❌ File {filename} tidak ditemukan")
+            return False
     
     def extract_text_excel(self, excel_path):
         """Ekstraksi teks dari file Excel (multiple sheets)"""
@@ -574,7 +526,7 @@ class ImprovedDocumentProcessor:
                 for page_num, page in enumerate(pdf.pages, 1):
                     page_text = page.extract_text()
                     
-                    # Analisis jenis halaman (akan return "Halaman Biasa" jika bukan tabel khusus)
+                    # Analisis jenis halaman
                     page_type, table_info = self._analyze_page_type(page_text)
                     
                     if page_text:
@@ -591,7 +543,7 @@ class ImprovedDocumentProcessor:
                         
                         text_content += page_text + "\n"
                     
-                    # Ekstraksi tabel - bekerja untuk semua jenis tabel
+                    # Ekstraksi tabel
                     tables = page.extract_tables()
                     if tables:
                         for table_num, table in enumerate(tables, 1):
@@ -608,12 +560,11 @@ class ImprovedDocumentProcessor:
                                 original_title = self.table_contexts[table_info]['title']
                                 table_title = f"Lanjutan {original_title} (Halaman {page_num})"
                             else:
-                                # Untuk PDF biasa tanpa pola khusus
                                 table_title = f"Tabel {table_num} pada Halaman {page_num}"
                             
                             text_content += f"\n--- {table_title} ---\n"
                             
-                            # Tampilkan header referensi hanya jika diperlukan
+                            # Tampilkan header referensi jika diperlukan
                             if (page_type == "Lanjutan Tabel" and table_info and 
                                 table_info in self.table_contexts and 
                                 self._is_continuation_without_headers(table)):
@@ -625,11 +576,10 @@ class ImprovedDocumentProcessor:
                                     text_content += " | ".join(clean_headers) + "\n"
                                     text_content += "-" * 50 + "\n"
                             
-                            # Ekstraksi data tabel (standar untuk semua PDF)
+                            # Ekstraksi data tabel
                             for row_num, row in enumerate(table):
                                 if row:
                                     clean_row = [str(cell) if cell is not None else "" for cell in row]
-                                    # Tandai header jika terdeteksi
                                     if row_num == 0 and self._looks_like_header(row):
                                         text_content += "[HEADER] " + " | ".join(clean_row) + "\n"
                                     else:
@@ -640,15 +590,13 @@ class ImprovedDocumentProcessor:
         except Exception as e:
             st.warning(f"PDFPlumber gagal untuk {pdf_path}: {str(e)}")
             return None
-        
+    
     def _analyze_page_type(self, page_text):
-        """Menganalisis jenis halaman berdasarkan teks - fleksibel untuk berbagai format PDF"""
+        """Menganalisis jenis halaman berdasarkan teks"""
         if not page_text:
             return "Unknown", None
         
-        # Pattern yang lebih fleksibel untuk berbagai format tabel
         patterns = {
-            # Format Indonesia
             'continued_id': [
                 r'Lanjutan\s+Tabel[/\\]?Continued\s+Table\s+(\d+(?:\.\d+)*)',
                 r'Lanjutan\s+Tabel\s+(\d+(?:\.\d+)*)',
@@ -662,21 +610,14 @@ class ImprovedDocumentProcessor:
                 r'Lampiran\s+Tabel\s+(\d+(?:\.\d+)*)',
                 r'Appendix\s+Table\s+(\d+(?:\.\d+)*)',
             ],
-            # Format Inggris
-            'continued_en': [
-                r'Continued\s+from\s+Table\s+(\d+(?:\.\d+)*)',
-                r'Table\s+(\d+(?:\.\d+)*)\s*\(Continued\)',
-                r'\(Continued\)\s*Table\s+(\d+(?:\.\d+)*)',
-            ]
         }
         
-        # Cek halaman lanjutan terlebih dahulu (prioritas tinggi)
-        for pattern_list in [patterns['continued_id'], patterns['continued_en']]:
-            for pattern in pattern_list:
-                match = re.search(pattern, page_text, re.IGNORECASE)
-                if match:
-                    table_number = match.group(1)
-                    return "Lanjutan Tabel", f"Tabel {table_number}"
+        # Cek halaman lanjutan terlebih dahulu
+        for pattern in patterns['continued_id']:
+            match = re.search(pattern, page_text, re.IGNORECASE)
+            if match:
+                table_number = match.group(1)
+                return "Lanjutan Tabel", f"Tabel {table_number}"
         
         # Cek tabel utama
         for pattern in patterns['main_table_id']:
@@ -685,7 +626,6 @@ class ImprovedDocumentProcessor:
                 table_number = match.group(1)
                 return "Tabel Utama", f"Tabel {table_number}"
         
-        # Jika tidak ada pattern yang cocok, kembalikan halaman biasa
         return "Halaman Biasa", None
     
     def _looks_like_header(self, row):
@@ -693,7 +633,6 @@ class ImprovedDocumentProcessor:
         if not row:
             return False
         
-        # Heuristic: header biasanya mengandung kata-kata tertentu
         header_indicators = ['tahun', 'year', 'jumlah', 'number', 'modal', 'investment', 
                            'proyek', 'project', 'sektor', 'sector', 'industri', 'industry']
         
@@ -706,7 +645,6 @@ class ImprovedDocumentProcessor:
             return True
         
         first_row = table[0]
-        # Jika baris pertama terlihat seperti data (angka, kode) bukan header
         if first_row and len([cell for cell in first_row if cell and str(cell).isdigit()]) > len(first_row) / 2:
             return True
         
@@ -721,12 +659,10 @@ class ImprovedDocumentProcessor:
                 for page_num, page in enumerate(pdf_reader.pages, 1):
                     page_text = page.extract_text()
                     if page_text:
-                        # Analisis jenis halaman
                         page_type, table_info = self._analyze_page_type(page_text)
                         
                         text_content += f"\n--- Halaman {page_num} ({page_type}) ---\n"
                         
-                        # Tambahkan referensi jika halaman lanjutan
                         if page_type == "Lanjutan Tabel" and table_info:
                             if table_info in self.table_contexts:
                                 original_info = self.table_contexts[table_info]
@@ -734,12 +670,11 @@ class ImprovedDocumentProcessor:
                         
                         text_content += page_text + "\n"
                         
-                        # Simpan konteks jika tabel utama
                         if page_type == "Tabel Utama" and table_info:
                             self.table_contexts[table_info] = {
                                 'title': table_info,
                                 'page': page_num,
-                                'headers': None  # PyPDF2 tidak dapat ekstrak tabel terstruktur
+                                'headers': None
                             }
             
             return text_content
@@ -914,12 +849,12 @@ class ImprovedWordCloudGenerator:
             background_color='white',
             max_words=max_words,
             colormap='viridis',
-            font_path=None,  # Gunakan font default
+            font_path=None,
             relative_scaling=0.5,
             min_font_size=10,
             max_font_size=100,
             prefer_horizontal=0.7,
-            collocations=False  # Hindari kata berulang
+            collocations=False
         ).generate(processed_text)
         
         return wordcloud
@@ -931,7 +866,6 @@ class ImprovedWordCloudGenerator:
         ax.axis('off')
         ax.set_title(title, fontsize=16, fontweight='bold', pad=20)
         
-        # Tight layout untuk menghindari clipping
         plt.tight_layout()
         
         return fig
@@ -968,8 +902,11 @@ class ChatLogger:
         logs.append(log_entry)
         
         # Simpan ke file
-        with open(self.log_file, 'w', encoding='utf-8') as f:
-            json.dump(logs, f, ensure_ascii=False, indent=2)
+        try:
+            with open(self.log_file, 'w', encoding='utf-8') as f:
+                json.dump(logs, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            st.error(f"Error saving log: {str(e)}")
     
     def load_logs(self):
         """Memuat log dari file"""
@@ -984,7 +921,11 @@ class ChatLogger:
 class GeminiChatbot:
     def __init__(self, document_processor):
         self.document_processor = document_processor
-        self.model = genai.GenerativeModel('gemini-2.0-flash-exp')
+        try:
+            self.model = genai.GenerativeModel('gemini-2.0-flash-exp')
+        except Exception as e:
+            st.error(f"Error initializing Gemini model: {str(e)}")
+            self.model = None
         
     def is_document_related(self, message):
         """Menentukan apakah pertanyaan terkait dengan dokumen dengan logika yang lebih ketat"""
@@ -1036,6 +977,9 @@ class GeminiChatbot:
     
     def generate_response(self, user_message):
         """Menghasilkan respons dari Gemini dengan handling yang lebih baik"""
+        
+        if not self.model:
+            return "Maaf, terjadi kesalahan dengan model AI. Silakan coba lagi nanti.", False, 0
         
         # Handle greeting terlebih dahulu
         if self.is_greeting(user_message):
@@ -1157,21 +1101,29 @@ def show_initial_greeting():
         st.session_state.greeting_shown = True
 
 def init_session_state():
-    """Inisialisasi session state"""
+    """PERBAIKAN: Inisialisasi session state dengan cache persisten"""
     if 'messages' not in st.session_state:
         st.session_state.messages = []
+    
+    # PERBAIKAN: Inisialisasi document processor hanya sekali
     if 'document_processor' not in st.session_state:
-        st.session_state.document_processor = ImprovedDocumentProcessor(DOCUMENTS_FOLDER_PATH)
+        st.session_state.document_processor = PersistentDocumentProcessor(DOCUMENTS_FOLDER_PATH)
+    
     if 'chatbot' not in st.session_state:
         st.session_state.chatbot = GeminiChatbot(st.session_state.document_processor)
+    
     if 'chat_logger' not in st.session_state:
         st.session_state.chat_logger = ChatLogger(CHAT_LOG_FILE)
+    
     if 'admin_authenticated' not in st.session_state:
         st.session_state.admin_authenticated = False
+    
     if 'wordcloud_generator' not in st.session_state:
         st.session_state.wordcloud_generator = ImprovedWordCloudGenerator()
+    
     if 'input_disabled' not in st.session_state:
         st.session_state.input_disabled = False
+    
     if 'greeting_shown' not in st.session_state:
         st.session_state.greeting_shown = False
 
@@ -1198,14 +1150,15 @@ def enhanced_admin_cache_management():
         st.metric("Total Chunks", cache_info['total_chunks'])
     
     if cache_info['cached_at']:
-        st.info(f"📅 Cache terakhir diperbarui: {cache_info['cached_at']}")
+        last_check = datetime.fromtimestamp(cache_info['cached_at'])
+        st.info(f"📅 Cache terakhir diperiksa: {last_check.strftime('%Y-%m-%d %H:%M:%S')}")
     
     # File management section
     st.subheader("📁 File Management")
     
     if cache_info['cached_files']:
         # Create tabs for different views
-        tab1, tab2, tab3 = st.tabs(["📋 File List", "➕ Add Files", "🔄 Bulk Operations"])
+        tab1, tab2, tab3 = st.tabs(["📋 File List", "🔄 Manual Operations", "📊 Cache Statistics"])
         
         with tab1:
             # Detailed file list
@@ -1243,93 +1196,29 @@ def enhanced_admin_cache_management():
                     with col2:
                         # Refresh single file
                         if st.button(f"🔄 Refresh", key=f"refresh_{i}"):
-                            if filename in current_files:
-                                file_info = current_files[filename]
-                                success = st.session_state.document_processor.process_single_document(
-                                    filename, file_info['path']
-                                )
-                                if success:
-                                    st.session_state.document_processor.document_hashes[filename] = file_info['hash']
-                                    st.session_state.document_processor.save_cache()
-                                    st.success(f"✅ {filename} berhasil di-refresh")
-                                    st.rerun()
-                                else:
-                                    st.error(f"❌ Gagal refresh {filename}")
-                            else:
-                                st.error("File tidak ditemukan")
+                            success = st.session_state.document_processor.force_refresh_single_file(filename)
+                            if success:
+                                st.rerun()
                     
                     with col3:
                         # Remove from cache
                         if st.button(f"🗑️ Remove", key=f"remove_{i}"):
-                            st.session_state.document_processor.remove_document_from_cache(filename)
+                            st.session_state.document_processor._remove_file_from_cache(filename)
+                            st.success(f"✅ {filename} dihapus dari cache")
                             st.rerun()
         
         with tab2:
-            # Add new files section
-            st.write("**Tambah file baru ke cache:**")
-            
-            current_files = st.session_state.document_processor.get_all_document_files()
-            cached_files = set(cache_info['cached_files'])
-            uncached_files = {name: info for name, info in current_files.items() if name not in cached_files}
-            
-            if uncached_files:
-                st.write(f"Ditemukan {len(uncached_files)} file yang belum di-cache:")
-                
-                # Select files to add
-                files_to_add = st.multiselect(
-                    "Pilih file yang ingin ditambahkan:",
-                    list(uncached_files.keys()),
-                    default=list(uncached_files.keys())  # Select all by default
-                )
-                
-                if st.button("➕ Tambah File Terpilih", disabled=not files_to_add):
-                    progress_bar = st.progress(0)
-                    status_text = st.empty()
-                    
-                    success_count = 0
-                    for i, filename in enumerate(files_to_add):
-                        status_text.text(f"Memproses {filename}...")
-                        
-                        file_info = uncached_files[filename]
-                        success = st.session_state.document_processor.process_single_document(
-                            filename, file_info['path']
-                        )
-                        
-                        if success:
-                            st.session_state.document_processor.document_hashes[filename] = file_info['hash']
-                            success_count += 1
-                        
-                        progress_bar.progress((i + 1) / len(files_to_add))
-                    
-                    # Save cache
-                    if st.session_state.document_processor.save_cache():
-                        st.success(f"✅ Berhasil menambahkan {success_count}/{len(files_to_add)} file")
-                    else:
-                        st.error("❌ Gagal menyimpan cache")
-                    
-                    status_text.empty()
-                    progress_bar.empty()
-                    st.rerun()
-            else:
-                st.info("✅ Semua file dalam folder sudah ter-cache")
-        
-        with tab3:
-            # Bulk operations
-            st.write("**Operasi Bulk:**")
+            # Manual operations
+            st.write("**Operasi Manual:**")
             
             col1, col2 = st.columns(2)
             
             with col1:
-                if st.button("🔄 Refresh Semua Cache", help="Periksa dan update semua file yang berubah"):
-                    st.session_state.document_processor.load_or_cache_documents()
+                if st.button("🔄 Check for Updates", help="Periksa file yang berubah"):
+                    st.session_state.document_processor.load_documents()
                     st.rerun()
                 
-                if st.button("🗑️ Hapus Semua Cache", help="Hapus semua cache dan mulai dari awal"):
-                    st.session_state.document_processor.refresh_cache()
-                    st.rerun()
-            
-            with col2:
-                if st.button("📊 Analisis Folder", help="Analisis perbedaan antara folder dan cache"):
+                if st.button("📊 Analyze Folder", help="Analisis perbedaan antara folder dan cache"):
                     current_files = st.session_state.document_processor.get_all_document_files()
                     cached_files = set(cache_info['cached_files'])
                     
@@ -1364,34 +1253,39 @@ def enhanced_admin_cache_management():
                     
                     if not uncached and not missing and not needs_update:
                         st.success("✅ Cache dan folder sudah sinkron sempurna!")
-    else:
-        st.info("Tidak ada file dalam cache. Silakan tambahkan dokumen ke folder dan refresh.")
-    
-    # Cache statistics
-    st.subheader("📊 Cache Statistics")
-    
-    if cache_info['total_documents'] > 0:
-        # File type distribution
-        file_types = {}
-        for filename in cache_info['cached_files']:
-            ext = os.path.splitext(filename)[1].lower()
-            file_types[ext] = file_types.get(ext, 0) + 1
-        
-        if file_types:
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                st.write("**Distribusi Jenis File:**")
-                for ext, count in file_types.items():
-                    st.write(f"  • {ext}: {count} file(s)")
             
             with col2:
-                # Memory usage per file
-                st.write("**Penggunaan Memori per File:**")
-                for filename in cache_info['cached_files'][:5]:  # Show top 5
-                    if filename in st.session_state.document_processor.document_contents:
-                        content_size = len(st.session_state.document_processor.document_contents[filename])
-                        st.write(f"  • {filename}: {content_size/1024:.1f} KB")
+                st.write("**Refresh Cache:**")
+                st.session_state.document_processor.refresh_cache()
+        
+        with tab3:
+            # Cache statistics
+            st.write("**Cache Statistics:**")
+            
+            if cache_info['total_documents'] > 0:
+                # File type distribution
+                file_types = {}
+                for filename in cache_info['cached_files']:
+                    ext = os.path.splitext(filename)[1].lower()
+                    file_types[ext] = file_types.get(ext, 0) + 1
+                
+                if file_types:
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        st.write("**Distribusi Jenis File:**")
+                        for ext, count in file_types.items():
+                            st.write(f"  • {ext}: {count} file(s)")
+                    
+                    with col2:
+                        # Memory usage per file (estimated)
+                        st.write("**Estimasi Penggunaan Memori:**")
+                        for filename in cache_info['cached_files'][:5]:  # Show top 5
+                            if filename in st.session_state.document_processor.document_contents:
+                                content_size = len(st.session_state.document_processor.document_contents[filename])
+                                st.write(f"  • {filename}: {content_size/1024:.1f} KB")
+    else:
+        st.info("Tidak ada file dalam cache. Silakan tambahkan dokumen ke folder dan refresh.")
 
 def user_interface_alternative():
     """Interface alternatif dengan input form yang berpindah ke bawah saat processing"""
@@ -1801,12 +1695,14 @@ def main():
     # Sidebar untuk navigasi
     col1, col2, col3 = st.sidebar.columns([1, 2, 1])
     with col2:
-        st.image("assets/logo_bps.png", width=100)
+        try:
+            st.image("assets/logo_bps.png", width=100)
+        except:
+            st.write("🏛️ BPS")
     st.sidebar.title("Ruwai Jurai")
     st.sidebar.markdown("Ruang Interaksi Warga dengan BPS Provinsi Lampung")
     
     page = st.sidebar.selectbox("Pilih Halaman:", ["👤 User Chat", "👨‍💼 Admin Dashboard"])
-    
     
     # Routing halaman
     if page == "👤 User Chat":
@@ -1824,246 +1720,49 @@ def main():
             
             admin_interface()
 
-# Additional utility functions for better performance and user experience
+# Utility functions for better performance
+def clear_cache_on_demand():
+    """Clear cache hanya saat diminta"""
+    cache_key = f"document_cache_{CACHE_VERSION}"
+    if cache_key in st.session_state:
+        del st.session_state[cache_key]
+    st.success("Cache berhasil dihapus!")
 
-def clear_cache_files():
-    """Utility function to clear all cache files"""
-    try:
-        files_to_remove = [DOCUMENTS_CACHE_FILE, DOCUMENTS_HASH_FILE]
-        removed_count = 0
-        
-        for file_path in files_to_remove:
-            if os.path.exists(file_path):
-                os.remove(file_path)
-                removed_count += 1
-        
-        return removed_count > 0
-    except Exception as e:
-        st.error(f"Error clearing cache files: {str(e)}")
-        return False
-
-def get_system_info():
-    """Get system information for debugging"""
-    import platform
-    try:
-        import psutil
-        
-        info = {
-            'platform': platform.system(),
-            'python_version': platform.python_version(),
-            'memory_usage': psutil.virtual_memory().percent,
-            'disk_usage': psutil.disk_usage('.').percent,
-            'cache_files_exist': {
-                'documents_cache': os.path.exists(DOCUMENTS_CACHE_FILE),
-                'documents_hash': os.path.exists(DOCUMENTS_HASH_FILE),
-                'chat_logs': os.path.exists(CHAT_LOG_FILE)
-            }
+def get_cache_status():
+    """Get status cache saat ini"""
+    cache_key = f"document_cache_{CACHE_VERSION}"
+    if cache_key in st.session_state:
+        cache = st.session_state[cache_key]
+        return {
+            'is_initialized': cache.get('is_initialized', False),
+            'document_count': len(cache.get('document_contents', {})),
+            'last_check': cache.get('last_check'),
+            'total_chunks': sum(len(chunks) for chunks in cache.get('document_chunks', {}).values())
         }
-    except ImportError:
-        info = {
-            'platform': platform.system(),
-            'python_version': platform.python_version(),
-            'memory_usage': 'N/A (psutil not available)',
-            'disk_usage': 'N/A (psutil not available)',
-            'cache_files_exist': {
-                'documents_cache': os.path.exists(DOCUMENTS_CACHE_FILE),
-                'documents_hash': os.path.exists(DOCUMENTS_HASH_FILE),
-                'chat_logs': os.path.exists(CHAT_LOG_FILE)
-            }
-        }
-    
-    return info
+    return {'is_initialized': False, 'document_count': 0, 'last_check': None, 'total_chunks': 0}
 
-def export_chat_logs_to_csv():
-    """Export chat logs to CSV for analysis"""
-    try:
-        logger = ChatLogger(CHAT_LOG_FILE)
-        logs = logger.load_logs()
-        
-        if not logs:
-            return None
-        
-        # Convert to DataFrame
-        df = pd.DataFrame(logs)
-        
-        # Add derived columns
-        df['timestamp'] = pd.to_datetime(df['timestamp'])
-        df['date'] = df['timestamp'].dt.date
-        df['hour'] = df['timestamp'].dt.hour
-        df['day_of_week'] = df['timestamp'].dt.day_name()
-        
-        # Save to CSV
-        csv_filename = f"chat_logs_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-        df.to_csv(csv_filename, index=False, encoding='utf-8')
-        
-        return csv_filename
-    except Exception as e:
-        st.error(f"Error exporting logs: {str(e)}")
-        return None
+# Performance monitoring untuk debug
+def debug_performance():
+    """Debug function untuk monitoring performa"""
+    if st.sidebar.button("🔍 Debug Performance"):
+        status = get_cache_status()
+        st.sidebar.json(status)
 
-def backup_cache():
-    """Create backup of current cache"""
-    try:
-        import shutil
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        
-        backup_files = []
-        
-        if os.path.exists(DOCUMENTS_CACHE_FILE):
-            backup_cache_file = f"backup_documents_cache_{timestamp}.pkl"
-            shutil.copy2(DOCUMENTS_CACHE_FILE, backup_cache_file)
-            backup_files.append(backup_cache_file)
-        
-        if os.path.exists(DOCUMENTS_HASH_FILE):
-            backup_hash_file = f"backup_documents_hash_{timestamp}.json"
-            shutil.copy2(DOCUMENTS_HASH_FILE, backup_hash_file)
-            backup_files.append(backup_hash_file)
-        
-        return backup_files
-    except Exception as e:
-        st.error(f"Error creating backup: {str(e)}")
-        return []
-
-# Enhanced error handling and logging
-import logging
-
-def setup_logging():
-    """Setup logging for the application"""
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.FileHandler('chatbot_bps.log', encoding='utf-8'),
-            logging.StreamHandler()
-        ]
-    )
-    
-    return logging.getLogger('ChatbotBPS')
-
-# Performance monitoring
-class PerformanceMonitor:
-    def __init__(self):
-        self.metrics = {
-            'document_load_time': 0,
-            'response_generation_time': 0,
-            'cache_operations': 0,
-            'total_queries': 0
-        }
-    
-    def log_metric(self, metric_name, value):
-        """Log performance metric"""
-        if metric_name in self.metrics:
-            self.metrics[metric_name] += value
-    
-    def get_metrics(self):
-        """Get current metrics"""
-        return self.metrics.copy()
-    
-    def reset_metrics(self):
-        """Reset all metrics"""
-        for key in self.metrics:
-            self.metrics[key] = 0
-
-# Configuration management
-class ConfigManager:
-    def __init__(self):
-        self.config_file = "chatbot_config.json"
-        self.default_config = {
-            "max_user_message_tokens": 1500,
-            "max_session_tokens": 10000,
-            "chunk_size": 1000,
-            "max_context_length": 30000,
-            "documents_folder_path": r"files",
-            "gemini_model": "gemini-2.0-flash-exp",
-            "admin_credentials": {
-                "username": "admin",
-                "password": "admin123"
-            }
-        }
-        self.load_config()
-    
-    def load_config(self):
-        """Load configuration from file or create default"""
-        try:
-            if os.path.exists(self.config_file):
-                with open(self.config_file, 'r', encoding='utf-8') as f:
-                    self.config = json.load(f)
-            else:
-                self.config = self.default_config.copy()
-                self.save_config()
-        except Exception as e:
-            st.error(f"Error loading config: {str(e)}")
-            self.config = self.default_config.copy()
-    
-    def save_config(self):
-        """Save current configuration to file"""
-        try:
-            with open(self.config_file, 'w', encoding='utf-8') as f:
-                json.dump(self.config, f, indent=2, ensure_ascii=False)
-        except Exception as e:
-            st.error(f"Error saving config: {str(e)}")
-    
-    def get(self, key, default=None):
-        """Get configuration value"""
-        return self.config.get(key, default)
-    
-    def set(self, key, value):
-        """Set configuration value"""
-        self.config[key] = value
-        self.save_config()
-
-# Health check function
-def health_check():
-    """Perform system health check"""
-    health_status = {
-        'status': 'healthy',
-        'issues': [],
-        'warnings': []
-    }
-    
-    # Check if documents folder exists
-    if not os.path.exists(DOCUMENTS_FOLDER_PATH):
-        health_status['issues'].append(f"Documents folder not found: {DOCUMENTS_FOLDER_PATH}")
-        health_status['status'] = 'unhealthy'
-    
-    # Check cache files
-    if not os.path.exists(DOCUMENTS_CACHE_FILE):
-        health_status['warnings'].append("Document cache file not found")
-    
-    # Check API key
-    if not GEMINI_API_KEY or GEMINI_API_KEY == "YOUR_API_KEY_HERE":
-        health_status['issues'].append("Gemini API key not configured")
-        health_status['status'] = 'unhealthy'
-    
-    # Check memory usage
-    try:
-        import psutil
-        memory_usage = psutil.virtual_memory().percent
-        if memory_usage > 90:
-            health_status['warnings'].append(f"High memory usage: {memory_usage}%")
-        elif memory_usage > 95:
-            health_status['issues'].append(f"Critical memory usage: {memory_usage}%")
-            health_status['status'] = 'unhealthy'
-    except ImportError:
-        health_status['warnings'].append("psutil not available for memory monitoring")
-    
-    return health_status
-
+# Main execution
 if __name__ == "__main__":
-    # Setup logging
-    logger = setup_logging()
-    logger.info("Starting Chatbot BPS Provinsi Lampung")
-    
-    # Initialize session state components
-    if 'performance_monitor' not in st.session_state:
-        st.session_state.performance_monitor = PerformanceMonitor()
-    
-    if 'config_manager' not in st.session_state:
-        st.session_state.config_manager = ConfigManager()
-    
     try:
         main()
+        
+        # PERBAIKAN: Tambahkan debug info di sidebar untuk development
+        if st.sidebar.button("🔍 Show Cache Status"):
+            status = get_cache_status()
+            st.sidebar.json(status)
+            
     except Exception as e:
-        logger.error(f"Application error: {str(e)}")
         st.error(f"Terjadi kesalahan aplikasi: {str(e)}")
         st.info("Silakan refresh halaman atau hubungi administrator.")
+        
+        # PERBAIKAN: Tambahkan tombol untuk clear cache jika terjadi error
+        if st.button("🗑️ Clear Cache & Restart"):
+            clear_cache_on_demand()
+            st.rerun()
